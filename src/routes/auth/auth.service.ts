@@ -1,7 +1,10 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { isUniqueConstraintError } from '../../shared/helpers';
+import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { addMilliseconds } from 'date-fns';
+import ms, { StringValue } from 'ms';
+import envConfig from '../../shared/config';
+import { generateOTP, isUniqueConstraintError } from '../../shared/helpers';
+import { SharedUserRepository } from '../../shared/repositories/shared-user.repo';
 import { HashingService } from '../../shared/services/hashing.service';
-import { TokenService } from '../../shared/services/token.service';
 import { RegisterBodyType, SendOtpBodyType } from './auth.model';
 import { AuthRepository } from './auth.repo';
 import { RoleService } from './role.service';
@@ -10,9 +13,9 @@ import { RoleService } from './role.service';
 export class AuthService {
   constructor(
     private readonly hashingService: HashingService,
-    private readonly tokenService: TokenService,
     private readonly roleService: RoleService,
     private readonly authRepository: AuthRepository,
+    private readonly sharedUserRepository: SharedUserRepository,
   ) {}
   async register(body: RegisterBodyType) {
     try {
@@ -28,14 +31,36 @@ export class AuthService {
       });
     } catch (error) {
       if (isUniqueConstraintError(error)) {
-        throw new ConflictException('Email đã tồn tại');
+        throw new UnprocessableEntityException([
+          {
+            message: 'Email đã tồn tại',
+            path: 'email',
+          },
+        ]);
       }
       throw error;
     }
   }
 
-  sendOtp(body: SendOtpBodyType) {
-    return body;
+  async sendOtp(body: SendOtpBodyType) {
+    const user = await this.sharedUserRepository.findUnique({ email: body.email });
+    if (user) {
+      throw new UnprocessableEntityException([
+        {
+          message: 'Email đã tồn tại',
+          path: 'email',
+        },
+      ]);
+    }
+    const otp = generateOTP();
+    const verificationCode = await this.authRepository.createVerificationCode({
+      email: body.email,
+      code: otp,
+      type: body.type,
+      expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN as StringValue)),
+    });
+
+    return verificationCode;
   }
 
   // async login(body: any) {
