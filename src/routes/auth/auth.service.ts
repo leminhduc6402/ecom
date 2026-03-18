@@ -2,7 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { isUniqueConstraintError } from '../../shared/helpers';
 import { HashingService } from '../../shared/services/hashing.service';
 import { TokenService } from '../../shared/services/token.service';
-import { RegisterBodyType } from './auth.model';
+import { RegisterBodyType, SendOtpBodyType } from './auth.model';
 import { AuthRepository } from './auth.repo';
 import { RoleService } from './role.service';
 
@@ -32,6 +32,10 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  sendOtp(body: SendOtpBodyType) {
+    return body;
   }
 
   // async login(body: any) {

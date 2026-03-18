@@ -1,14 +1,14 @@
-import z from 'zod'
-import fs from 'fs'
-import path from 'path'
-import { config } from 'dotenv'
+import z from 'zod';
+import fs from 'fs';
+import path from 'path';
+import { config } from 'dotenv';
 
 config({
   path: '.env',
-})
+});
 if (!fs.existsSync(path.resolve('.env'))) {
-  console.log('Không tìm thấy file .env')
-  process.exit(1)
+  console.log('Không tìm thấy file .env');
+  process.exit(1);
 }
 
 const configSchema = z.object({
@@ -22,14 +22,15 @@ const configSchema = z.object({
   ADMIN_PASSWORD: z.string(),
   ADMIN_EMAIL: z.string(),
   ADMIN_PHONE: z.string(),
-})
+  OTP_EXPIRES_IN: z.string(),
+});
 
-const configServer = configSchema.safeParse(process.env)
+const configServer = configSchema.safeParse(process.env);
 if (!configServer.success) {
-  console.log('Các giá trị khai báo trong file .env không hợp lệ')
-  console.error(configServer.error)
-  process.exit(1)
+  console.log('Các giá trị khai báo trong file .env không hợp lệ');
+  console.error(configServer.error);
+  process.exit(1);
 }
 
-const envConfig = configServer.data
-export default envConfig
+const envConfig = configServer.data;
+export default envConfig;
