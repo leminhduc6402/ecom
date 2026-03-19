@@ -9,6 +9,7 @@ import { RegisterBodyType, SendOtpBodyType } from './auth.model';
 import { AuthRepository } from './auth.repo';
 import { RoleService } from './role.service';
 import { TypeOfVerificationCode } from '../../shared/constants/auth.constant';
+import { EmailService } from '../../shared/services/email.service';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly roleService: RoleService,
     private readonly authRepository: AuthRepository,
     private readonly sharedUserRepository: SharedUserRepository,
+    private readonly emailService: EmailService,
   ) {}
   async register(body: RegisterBodyType) {
     try {
@@ -91,6 +93,15 @@ export class AuthService {
       expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN as StringValue)),
     });
 
+    const { error } = await this.emailService.sendOTP({ email: body.email, code: otp });
+    if (error) {
+      throw new UnprocessableEntityException([
+        {
+          message: 'Gửi mã OTP thất bại',
+          path: 'code',
+        },
+      ]);
+    }
     return verificationCode;
   }
 
