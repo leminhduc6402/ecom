@@ -10,6 +10,7 @@ export const RegisterBodySchema = UserSchema.pick({
 })
   .extend({
     confirmPassword: z.string().min(6).max(100),
+    code: z.string().length(6),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Mật khẩu không khớp',
@@ -29,7 +30,12 @@ export const VerificationCode = z.object({
   id: z.number(),
   email: z.email(),
   code: z.string().length(6),
-  type: z.enum([TypeOfVerificationCode.FORGOT_PASSWORD, TypeOfVerificationCode.REGISTER]),
+  type: z.enum([
+    TypeOfVerificationCode.FORGOT_PASSWORD,
+    TypeOfVerificationCode.REGISTER,
+    TypeOfVerificationCode.LOGIN,
+    TypeOfVerificationCode.DISABLE_2FA,
+  ]),
   expiresAt: z.date(),
   createdAt: z.date(),
 });

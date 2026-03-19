@@ -8,6 +8,7 @@ import { HashingService } from '../../shared/services/hashing.service';
 import { RegisterBodyType, SendOtpBodyType } from './auth.model';
 import { AuthRepository } from './auth.repo';
 import { RoleService } from './role.service';
+import { TypeOfVerificationCode } from '../../shared/constants/auth.constant';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,36 @@ export class AuthService {
   ) {}
   async register(body: RegisterBodyType) {
     try {
+      const verificationCode = await this.authRepository.findUniqueVerificationCode({
+        email_type: {
+          email: body.email,
+          type: TypeOfVerificationCode.REGISTER,
+        },
+      });
+      if (!verificationCode) {
+        throw new UnprocessableEntityException([
+          {
+            message: 'Mã xác thực không tồn tại',
+            path: 'code',
+          },
+        ]);
+      }
+      if (verificationCode.code !== body.code) {
+        throw new UnprocessableEntityException([
+          {
+            message: 'Mã xác thực không hợp lệ',
+            path: 'code',
+          },
+        ]);
+      }
+      if (verificationCode.expiresAt < new Date()) {
+        throw new UnprocessableEntityException([
+          {
+            message: 'Mã xác thực đã hết hạn',
+            path: 'code',
+          },
+        ]);
+      }
       const clientRoleId = await this.roleService.getClientRoleId();
       const hashedPassword = await this.hashingService.hash(body.password);
 
