@@ -1,17 +1,17 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { HttpException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
 import { addMilliseconds } from 'date-fns';
 import ms, { StringValue } from 'ms';
 import envConfig from '../../shared/config';
+import { TypeOfVerificationCode } from '../../shared/constants/auth.constant';
 import { generateOTP, isUniqueConstraintError } from '../../shared/helpers';
 import { SharedUserRepository } from '../../shared/repositories/shared-user.repo';
-import { HashingService } from '../../shared/services/hashing.service';
-import { LoginBodyType, RegisterBodyType, SendOtpBodyType } from './auth.model';
-import { AuthRepository } from './auth.repo';
-import { RoleService } from './role.service';
-import { TypeOfVerificationCode } from '../../shared/constants/auth.constant';
 import { EmailService } from '../../shared/services/email.service';
+import { HashingService } from '../../shared/services/hashing.service';
 import { TokenService } from '../../shared/services/token.service';
 import { AccessTokenPayloadCreate } from '../../shared/types/jwt.type';
+import { LoginBodyType, RefreshTokenBodyType, RegisterBodyType, SendOtpBodyType } from './auth.model';
+import { AuthRepository } from './auth.repo';
+import { RoleService } from './role.service';
 
 @Injectable()
 export class AuthService {
@@ -155,33 +155,52 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  // async refreshToken(refreshToken: string) {
-  //   try {
-  //     // 1. Kiểm tra refreshToken có hợp lệ không
-  //     const { userId } = await this.tokenService.verifyRefreshToken(refreshToken);
-  //     // 2. Kiểm tra refreshToken có tồn tại trong database không
-  //     await this.prismaService.refreshToken.findUniqueOrThrow({
-  //       where: {
-  //         token: refreshToken,
-  //       },
-  //     });
-  //     // 3. Xóa refreshToken cũ
-  //     await this.prismaService.refreshToken.delete({
-  //       where: {
-  //         token: refreshToken,
-  //       },
-  //     });
-  //     // 4. Tạo mới accessToken và refreshToken
-  //     return await this.generateTokens({ userId });
-  //   } catch (error) {
-  //     // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
-  //     // refresh token của họ đã bị đánh cắp
-  //     if (isNotFountError(error)) {
-  //       throw new UnauthorizedException('Refresh token has been revoked');
-  //     }
-  //     throw new UnauthorizedException();
-  //   }
-  // }
+  async refreshToken({ refreshToken, userAgent, ip }: RefreshTokenBodyType & { userAgent: string; ip: string }) {
+    try {
+      // 1. Kiểm tra refreshToken có hợp lệ không
+      const { userId } = await this.tokenService.verifyRefreshToken(refreshToken);
+      // 2. Kiểm tra refreshToken có tồn tại trong database không
+      const refreshTokenInDb = await this.authRepository.findUniqueRefreshTokenIncludeUserRole({
+        token: refreshToken,
+      });
+      if (!refreshTokenInDb) {
+        throw new UnauthorizedException([
+          {
+            message: 'Refresh token không tồn tại',
+            path: 'refreshToken',
+          },
+        ]);
+      }
+
+      const {
+        deviceId,
+        user: {
+          roleId,
+          role: { name: roleName },
+        },
+      } = refreshTokenInDb;
+      // 3. Cập nhật device
+      const $updateDevice = this.authRepository.updateDevice(deviceId, {
+        userAgent,
+        ip,
+      });
+      // 4. Xóa refreshToken cũ
+      const $deleteRefreshToken = this.authRepository.deleteRefreshToken({
+        token: refreshToken,
+      });
+      // 5. Tạo mới accessToken và refreshToken
+      const $tokens = this.generateTokens({ deviceId, userId, roleId, roleName });
+      const [, , tokens] = await Promise.all([$updateDevice, $deleteRefreshToken, $tokens]);
+      return tokens;
+    } catch (error) {
+      // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
+      // refresh token của họ đã bị đánh cắp
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new UnauthorizedException();
+    }
+  }
 
   // async logout(refreshToken: string) {
   //   try {

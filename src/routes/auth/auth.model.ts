@@ -89,6 +89,15 @@ export const DeviceSchema = z.object({
 });
 export type DeviceType = z.infer<typeof DeviceSchema>;
 
+export const RefreshTokenSchema = z.object({
+  token: z.string(),
+  userId: z.number(),
+  deviceId: z.number(),
+  expiresAt: z.date(),
+  createdAt: z.date(),
+});
+export type RefreshTokenType = z.infer<typeof RefreshTokenSchema>;
+
 export const RoleSchema = z.object({
   id: z.number(),
   name: z.string(),
