@@ -5,11 +5,13 @@ import envConfig from '../../shared/config';
 import { generateOTP, isUniqueConstraintError } from '../../shared/helpers';
 import { SharedUserRepository } from '../../shared/repositories/shared-user.repo';
 import { HashingService } from '../../shared/services/hashing.service';
-import { RegisterBodyType, SendOtpBodyType } from './auth.model';
+import { LoginBodyType, RegisterBodyType, SendOtpBodyType } from './auth.model';
 import { AuthRepository } from './auth.repo';
 import { RoleService } from './role.service';
 import { TypeOfVerificationCode } from '../../shared/constants/auth.constant';
 import { EmailService } from '../../shared/services/email.service';
+import { TokenService } from '../../shared/services/token.service';
+import { AccessTokenPayloadCreate } from '../../shared/types/jwt.type';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +21,7 @@ export class AuthService {
     private readonly authRepository: AuthRepository,
     private readonly sharedUserRepository: SharedUserRepository,
     private readonly emailService: EmailService,
+    private readonly tokenService: TokenService,
   ) {}
   async register(body: RegisterBodyType) {
     try {
@@ -105,46 +108,52 @@ export class AuthService {
     return verificationCode;
   }
 
-  // async login(body: any) {
-  //   const user = await this.prismaService.user.findFirst({
-  //     where: {
-  //       email: body.email,
-  //     },
-  //   });
+  async login(body: LoginBodyType & { userAgent: string; ip: string }) {
+    const user = await this.authRepository.findUniqueUserIncludeRole({
+      email: body.email,
+    });
 
-  //   if (!user) {
-  //     throw new UnauthorizedException('Account is not exist');
-  //   }
+    if (!user) {
+      throw new UnprocessableEntityException('Email không tồn tại');
+    }
 
-  //   const isPasswordMatch = await this.hashingService.compare(body.password, user.password);
-  //   if (!isPasswordMatch) {
-  //     throw new UnprocessableEntityException([
-  //       {
-  //         field: 'password',
-  //         error: 'Password is incorrect',
-  //       },
-  //     ]);
-  //   }
-  //   const tokens = await this.generateTokens({ userId: user.id });
-  //   return tokens;
-  // }
+    const isPasswordMatch = await this.hashingService.compare(body.password, user.password);
+    if (!isPasswordMatch) {
+      throw new UnprocessableEntityException([
+        {
+          field: 'password',
+          error: 'Password không đúng',
+        },
+      ]);
+    }
+    const device = await this.authRepository.createDevice({
+      userId: user.id,
+      userAgent: body.userAgent,
+      ip: body.ip,
+    });
+    const tokens = await this.generateTokens({
+      userId: user.id,
+      deviceId: device.id,
+      roleId: user.roleId,
+      roleName: user.role.name,
+    });
+    return tokens;
+  }
 
-  // async generateTokens(payload: { userId: number }) {
-  //   const [accessToken, refreshToken] = await Promise.all([
-  //     this.tokenService.signAccessToken(payload),
-  //     this.tokenService.signRefreshToken(payload),
-  //   ]);
-  //   const decodedRefreshToken = await this.tokenService.verifyRefreshToken(refreshToken);
-  //   await this.prismaService.refreshToken.create({
-  //     data: {
-  //       token: refreshToken,
-  //       userId: payload.userId,
-  //       deviceId: 0,
-  //       expiresAt: new Date(decodedRefreshToken.exp * 1000),
-  //     },
-  //   });
-  //   return { accessToken, refreshToken };
-  // }
+  async generateTokens({ userId, deviceId, roleId, roleName }: AccessTokenPayloadCreate) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.tokenService.signAccessToken({ userId, deviceId, roleId, roleName }),
+      this.tokenService.signRefreshToken({ userId }),
+    ]);
+    const decodedRefreshToken = await this.tokenService.verifyRefreshToken(refreshToken);
+    await this.authRepository.createRefreshToken({
+      token: refreshToken,
+      userId: userId,
+      expiresAt: new Date(decodedRefreshToken.exp * 1000),
+      deviceId,
+    });
+    return { accessToken, refreshToken };
+  }
 
   // async refreshToken(refreshToken: string) {
   //   try {
