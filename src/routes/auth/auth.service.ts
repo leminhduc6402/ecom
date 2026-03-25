@@ -89,7 +89,7 @@ export class AuthService {
       ]);
     }
     const otp = generateOTP();
-    const verificationCode = await this.authRepository.createVerificationCode({
+    await this.authRepository.createVerificationCode({
       email: body.email,
       code: otp,
       type: body.type,
@@ -105,7 +105,7 @@ export class AuthService {
         },
       ]);
     }
-    return verificationCode;
+    return { message: 'Gửi mã OTP thành công' };
   }
 
   async login(body: LoginBodyType & { userAgent: string; ip: string }) {

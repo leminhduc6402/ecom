@@ -20,10 +20,10 @@ export class AuthenticationGuard implements CanActivate {
     };
   }
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const authTypeValue = this.reflector.getAllAndOverride<AuthTypeDecoratorPayload | undefined>(
-      AUTH_TYPE_KEY,
-      [context.getHandler(), context.getClass()],
-    ) ?? { authType: [AuthType.None], options: { condition: ConditionGuard.Or } };
+    const authTypeValue = this.reflector.getAllAndOverride<AuthTypeDecoratorPayload | undefined>(AUTH_TYPE_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]) ?? { authType: [AuthType.Bearer], options: { condition: ConditionGuard.Or } };
 
     const guards = authTypeValue.authType.map((type) => this.authTypeGuardMap[type]);
     if (authTypeValue.options.condition === ConditionGuard.Or) {
