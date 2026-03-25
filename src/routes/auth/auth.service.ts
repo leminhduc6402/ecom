@@ -3,7 +3,7 @@ import { addMilliseconds } from 'date-fns';
 import ms, { StringValue } from 'ms';
 import envConfig from '../../shared/config';
 import { TypeOfVerificationCode } from '../../shared/constants/auth.constant';
-import { generateOTP, isUniqueConstraintError } from '../../shared/helpers';
+import { generateOTP, isNotFountError, isUniqueConstraintError } from '../../shared/helpers';
 import { SharedUserRepository } from '../../shared/repositories/shared-user.repo';
 import { EmailService } from '../../shared/services/email.service';
 import { HashingService } from '../../shared/services/hashing.service';
@@ -202,24 +202,31 @@ export class AuthService {
     }
   }
 
-  // async logout(refreshToken: string) {
-  //   try {
-  //     // 1. Kiểm tra refreshToken có hợp lệ không
-  //     await this.tokenService.verifyRefreshToken(refreshToken);
-  //     // 2. Xóa refreshToken trong database
-  //     await this.prismaService.refreshToken.delete({
-  //       where: {
-  //         token: refreshToken,
-  //       },
-  //     });
-  //     return { message: 'Logout successfully' };
-  //   } catch (error) {
-  //     // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
-  //     // refresh token của họ đã bị đánh cắp
-  //     if (isNotFountError(error)) {
-  //       throw new UnauthorizedException('Refresh token has been revoked');
-  //     }
-  //     throw new UnauthorizedException();
-  //   }
-  // }
+  async logout(refreshToken: string) {
+    try {
+      // 1. Kiểm tra refreshToken có hợp lệ không
+      await this.tokenService.verifyRefreshToken(refreshToken);
+      // 2. Xóa refreshToken trong database
+      const deletedRefreshToken = await this.authRepository.deleteRefreshToken({
+        token: refreshToken,
+      });
+      // 3. Cập nhật device là đã logout
+      await this.authRepository.updateDevice(deletedRefreshToken.deviceId, {
+        isActive: false,
+      });
+      return { message: 'Đăng xuất thành công' };
+    } catch (error) {
+      // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
+      // refresh token của họ đã bị đánh cắp
+      if (isNotFountError(error)) {
+        throw new UnauthorizedException([
+          {
+            message: 'Refresh token đã bị thu hồi',
+            path: 'refreshToken',
+          },
+        ]);
+      }
+      throw new UnauthorizedException();
+    }
+  }
 }

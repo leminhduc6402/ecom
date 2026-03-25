@@ -110,3 +110,6 @@ export const RoleSchema = z.object({
   updatedAt: z.date(),
 });
 export type RoleType = z.infer<typeof RoleSchema>;
+
+export const LogoutBodySchema = RefreshTokenBodySchema;
+export type LogoutBodyType = RefreshTokenBodyType;
