@@ -1,6 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { ZodSerializerDto } from 'nestjs-zod';
+import envConfig from '../../shared/config';
+import { IsPublic } from '../../shared/decorators/auth.decorator';
+import { IP } from '../../shared/decorators/ip.decorator';
+import { UserAgent } from '../../shared/decorators/user-agent.decorator';
+import { MessageResDTO } from '../../shared/dtos/response.dto';
 import {
+  getAuthorizationUrlResDto,
   LoginBodyDto,
   LoginResDto,
   LogoutBodyDTO,
@@ -11,14 +18,14 @@ import {
   SendOtpBodyDto,
 } from './auth.dto';
 import { AuthService } from './auth.service';
-import { UserAgent } from '../../shared/decorators/user-agent.decorator';
-import { IP } from '../../shared/decorators/ip.decorator';
-import { MessageResDTO } from '../../shared/dtos/response.dto';
-import { IsPublic } from '../../shared/decorators/auth.decorator';
+import { GoogleService } from './google.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly googleService: GoogleService,
+  ) {}
 
   @IsPublic()
   @Post('register')
@@ -55,5 +62,26 @@ export class AuthController {
   @ZodSerializerDto(MessageResDTO)
   async logout(@Body() logoutDTO: LogoutBodyDTO) {
     return await this.authService.logout(logoutDTO.refreshToken);
+  }
+
+  @Get('google-link')
+  @IsPublic()
+  @ZodSerializerDto(getAuthorizationUrlResDto)
+  getAuthorizationUrl(@UserAgent() userAgent: string, @IP() ip: string) {
+    return this.googleService.getAuthorizationUrl({ userAgent, ip });
+  }
+
+  @Get('google/callback')
+  @IsPublic()
+  async googleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+    try {
+      const data = await this.googleService.googleCallback({ code, state });
+      return res.redirect(
+        `${envConfig.GOOGLE_CLIENT_REDIRECT_URI}/auth/google/callback?accessToken=${data.accessToken}&refreshToken=${data.refreshToken}`,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Có lỗi xảy ra';
+      return res.redirect(`${envConfig.GOOGLE_CLIENT_REDIRECT_URI}/auth/google/callback?errorMessage=${message}`);
+    }
   }
 }

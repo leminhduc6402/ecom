@@ -113,3 +113,16 @@ export type RoleType = z.infer<typeof RoleSchema>;
 
 export const LogoutBodySchema = RefreshTokenBodySchema;
 export type LogoutBodyType = RefreshTokenBodyType;
+
+export const GoogleAuthStateSchema = DeviceSchema.pick({
+  userAgent: true,
+  ip: true,
+}).strict();
+export type GoogleAuthStateType = z.infer<typeof GoogleAuthStateSchema>;
+
+export const getAuthorizationUrlResSchema = z
+  .object({
+    url: z.string(),
+  })
+  .strict();
+export type getAuthorizationUrlResType = z.infer<typeof getAuthorizationUrlResSchema>;
