@@ -1,16 +1,31 @@
-import { HttpException, Injectable, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import { HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { addMilliseconds } from 'date-fns';
 import ms, { StringValue } from 'ms';
 import envConfig from '../../shared/config';
-import { TypeOfVerificationCode } from '../../shared/constants/auth.constant';
-import { generateOTP, isNotFountError, isUniqueConstraintError } from '../../shared/helpers';
+import { TypeOfVerificationCode, TypeOfVerificationCodeType } from '../../shared/constants/auth.constant';
+import { generateOTP, isNotFoundError, isUniqueConstraintError } from '../../shared/helpers';
 import { SharedUserRepository } from '../../shared/repositories/shared-user.repo';
 import { EmailService } from '../../shared/services/email.service';
 import { HashingService } from '../../shared/services/hashing.service';
 import { TokenService } from '../../shared/services/token.service';
 import { AccessTokenPayloadCreate } from '../../shared/types/jwt.type';
-import { LoginBodyType, RefreshTokenBodyType, RegisterBodyType, SendOtpBodyType } from './auth.model';
+import {
+  ForgotPasswordBodyType,
+  LoginBodyType,
+  RefreshTokenBodyType,
+  RegisterBodyType,
+  SendOtpBodyType,
+} from './auth.model';
 import { AuthRepository } from './auth.repo';
+import {
+  EmailAlreadyExistsException,
+  EmailNotFoundException,
+  FailedToSendOTPException,
+  InvalidOTPException,
+  InvalidPasswordException,
+  OTPExpiredException,
+  RefreshTokenAlreadyUsedException,
+} from './error.model';
 import { RoleService } from './role.service';
 
 @Injectable()
@@ -23,56 +38,61 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly tokenService: TokenService,
   ) {}
+
+  async validateVerificationCode({
+    email,
+    type,
+    code,
+  }: {
+    email: string;
+    type: TypeOfVerificationCodeType;
+    code: string;
+  }) {
+    const verificationCode = await this.authRepository.findUniqueVerificationCode({
+      email_type: {
+        email,
+        type,
+      },
+    });
+    if (!verificationCode || verificationCode.code !== code) {
+      throw InvalidOTPException;
+    }
+    if (verificationCode.expiresAt < new Date()) {
+      throw OTPExpiredException;
+    }
+    return verificationCode;
+  }
+
   async register(body: RegisterBodyType) {
     try {
-      const verificationCode = await this.authRepository.findUniqueVerificationCode({
-        email_type: {
-          email: body.email,
-          type: TypeOfVerificationCode.REGISTER,
-        },
+      await this.validateVerificationCode({
+        email: body.email,
+        type: TypeOfVerificationCode.REGISTER,
+        code: body.code,
       });
-      if (!verificationCode) {
-        throw new UnprocessableEntityException([
-          {
-            message: 'Mã xác thực không tồn tại',
-            path: 'code',
-          },
-        ]);
-      }
-      if (verificationCode.code !== body.code) {
-        throw new UnprocessableEntityException([
-          {
-            message: 'Mã xác thực không hợp lệ',
-            path: 'code',
-          },
-        ]);
-      }
-      if (verificationCode.expiresAt < new Date()) {
-        throw new UnprocessableEntityException([
-          {
-            message: 'Mã xác thực đã hết hạn',
-            path: 'code',
-          },
-        ]);
-      }
       const clientRoleId = await this.roleService.getClientRoleId();
       const hashedPassword = await this.hashingService.hash(body.password);
 
-      return await this.authRepository.createUser({
-        email: body.email,
-        name: body.name,
-        phoneNumber: body.phoneNumber,
-        password: hashedPassword,
-        roleId: clientRoleId,
-      });
+      const [user] = await Promise.all([
+        this.authRepository.createUser({
+          email: body.email,
+          name: body.name,
+          phoneNumber: body.phoneNumber,
+          password: hashedPassword,
+          roleId: clientRoleId,
+        }),
+        this.authRepository.deleteVerificationCode({
+          email_type: {
+            email: body.email,
+            type: TypeOfVerificationCode.FORGOT_PASSWORD,
+          },
+        }),
+      ]);
+
+      return user;
     } catch (error) {
       if (isUniqueConstraintError(error)) {
-        throw new UnprocessableEntityException([
-          {
-            message: 'Email đã tồn tại',
-            path: 'email',
-          },
-        ]);
+        throw EmailAlreadyExistsException;
       }
       throw error;
     }
@@ -80,13 +100,11 @@ export class AuthService {
 
   async sendOtp(body: SendOtpBodyType) {
     const user = await this.sharedUserRepository.findUnique({ email: body.email });
-    if (user) {
-      throw new UnprocessableEntityException([
-        {
-          message: 'Email đã tồn tại',
-          path: 'email',
-        },
-      ]);
+    if (body.type === TypeOfVerificationCode.REGISTER && user) {
+      throw EmailAlreadyExistsException;
+    }
+    if (body.type !== TypeOfVerificationCode.FORGOT_PASSWORD && !user) {
+      throw EmailNotFoundException;
     }
     const otp = generateOTP();
     await this.authRepository.createVerificationCode({
@@ -98,12 +116,7 @@ export class AuthService {
 
     const { error } = await this.emailService.sendOTP({ email: body.email, code: otp });
     if (error) {
-      throw new UnprocessableEntityException([
-        {
-          message: 'Gửi mã OTP thất bại',
-          path: 'code',
-        },
-      ]);
+      throw FailedToSendOTPException;
     }
     return { message: 'Gửi mã OTP thành công' };
   }
@@ -114,17 +127,12 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnprocessableEntityException('Email không tồn tại');
+      throw EmailNotFoundException;
     }
 
     const isPasswordMatch = await this.hashingService.compare(body.password, user.password);
     if (!isPasswordMatch) {
-      throw new UnprocessableEntityException([
-        {
-          field: 'password',
-          error: 'Password không đúng',
-        },
-      ]);
+      throw InvalidPasswordException;
     }
     const device = await this.authRepository.createDevice({
       userId: user.id,
@@ -164,12 +172,7 @@ export class AuthService {
         token: refreshToken,
       });
       if (!refreshTokenInDb) {
-        throw new UnauthorizedException([
-          {
-            message: 'Refresh token không tồn tại',
-            path: 'refreshToken',
-          },
-        ]);
+        throw RefreshTokenAlreadyUsedException;
       }
 
       const {
@@ -218,15 +221,48 @@ export class AuthService {
     } catch (error) {
       // Trường hợp đã refresh token rồi, hãy thông báo cho user biết
       // refresh token của họ đã bị đánh cắp
-      if (isNotFountError(error)) {
-        throw new UnauthorizedException([
-          {
-            message: 'Refresh token đã bị thu hồi',
-            path: 'refreshToken',
-          },
-        ]);
+      if (isNotFoundError(error)) {
+        throw RefreshTokenAlreadyUsedException;
       }
       throw new UnauthorizedException();
     }
+  }
+
+  async forgotPassword(body: ForgotPasswordBodyType) {
+    const { email, code, newPassword } = body;
+    // 1. Kiểm tra email đã tồn tại trong database chưa
+    const user = await this.sharedUserRepository.findUnique({
+      email,
+    });
+    if (!user) {
+      throw EmailNotFoundException;
+    }
+    //2. Kiểm tra mã OTP có hợp lệ không
+    await this.validateVerificationCode({
+      email,
+      type: TypeOfVerificationCode.FORGOT_PASSWORD,
+      code,
+    });
+    //3. Cập nhật lại mật khẩu mới và xóa đi OTP
+    const hashedPassword = await this.hashingService.hash(newPassword);
+    await Promise.all([
+      // this.sharedUserRepository.update(
+      //   { id: user.id },
+      //   {
+      //     password: hashedPassword,
+      //     updatedById: user.id,
+      //   },
+      // ),
+      this.authRepository.updateUser({ id: user.id }, { password: hashedPassword }),
+      this.authRepository.deleteVerificationCode({
+        email_type: {
+          email: body.email,
+          type: TypeOfVerificationCode.FORGOT_PASSWORD,
+        },
+      }),
+    ]);
+    return {
+      message: 'Đổi mật khẩu thành công',
+    };
   }
 }

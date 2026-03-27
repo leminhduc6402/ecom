@@ -126,3 +126,16 @@ export const getAuthorizationUrlResSchema = z
   })
   .strict();
 export type getAuthorizationUrlResType = z.infer<typeof getAuthorizationUrlResSchema>;
+
+export const ForgotPasswordBodySchema = z
+  .object({
+    email: z.email(),
+    code: z.string().length(6),
+    newPassword: z.string().min(6).max(100),
+    confirmNewPassword: z.string().min(6).max(100),
+  })
+  .strict()
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: 'Mật khẩu mới không khớp',
+  });
+export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>;

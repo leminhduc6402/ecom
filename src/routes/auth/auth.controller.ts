@@ -7,6 +7,7 @@ import { IP } from '../../shared/decorators/ip.decorator';
 import { UserAgent } from '../../shared/decorators/user-agent.decorator';
 import { MessageResDTO } from '../../shared/dtos/response.dto';
 import {
+  ForgotPasswordBodyDto,
   getAuthorizationUrlResDto,
   LoginBodyDto,
   LoginResDto,
@@ -83,5 +84,12 @@ export class AuthController {
       const message = error instanceof Error ? error.message : 'Có lỗi xảy ra';
       return res.redirect(`${envConfig.GOOGLE_CLIENT_REDIRECT_URI}/auth/google/callback?errorMessage=${message}`);
     }
+  }
+
+  @Post('forgot-password')
+  @IsPublic()
+  @ZodSerializerDto(MessageResDTO)
+  forgotPassword(@Body() forgotPasswordDTO: ForgotPasswordBodyDto) {
+    return this.authService.forgotPassword(forgotPasswordDTO);
   }
 }
