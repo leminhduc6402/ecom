@@ -17,9 +17,12 @@ import {
   RegisterBodyDto,
   RegisterResDto,
   SendOtpBodyDto,
+  TwoFactorSetupResDto,
 } from './auth.dto';
 import { AuthService } from './auth.service';
 import { GoogleService } from './google.service';
+import { EmptyBodyDTO } from 'src/shared/dtos/request.dto';
+import { ActiveUser } from 'src/shared/decorators/active-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -91,5 +94,11 @@ export class AuthController {
   @ZodSerializerDto(MessageResDTO)
   forgotPassword(@Body() forgotPasswordDTO: ForgotPasswordBodyDto) {
     return this.authService.forgotPassword(forgotPasswordDTO);
+  }
+
+  @Post('2fa/setup')
+  @ZodSerializerDto(TwoFactorSetupResDto)
+  setup2FA(@Body() _: EmptyBodyDTO, @ActiveUser('userId') userId: number) {
+    return this.authService.setup2FA(userId);
   }
 }
