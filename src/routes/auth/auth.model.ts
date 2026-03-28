@@ -53,7 +53,12 @@ export type SendOtpBodyType = z.infer<typeof SendOtpBodySchema>;
 export const LoginBodySchema = UserSchema.pick({
   email: true,
   password: true,
-}).strict();
+})
+  .extend({
+    totpCode: z.string().length(6).optional(), // TOTP code for 2FA
+    code: z.string().length(6).optional(), // Email OTP code
+  })
+  .strict();
 export type LoginBodyType = z.infer<typeof LoginBodySchema>;
 
 // Login Response
@@ -139,3 +144,37 @@ export const ForgotPasswordBodySchema = z
     message: 'Mật khẩu mới không khớp',
   });
 export type ForgotPasswordBodyType = z.infer<typeof ForgotPasswordBodySchema>;
+
+export const TwoFactorSetupResSchema = z.object({
+  secret: z.string(),
+  url: z.string(),
+});
+export type TwoFactorSetupResType = z.infer<typeof TwoFactorSetupResSchema>;
+
+export const DisableTwoFactorBodySchema = z
+  .object({
+    totpCode: z.string().length(6).optional(),
+    code: z.string().length(6).optional(),
+  })
+  .strict()
+  .superRefine(({ code, totpCode }, ctx) => {
+    const hasCode = code !== undefined;
+    const hasTotpCode = totpCode !== undefined;
+
+    if (hasCode === hasTotpCode) {
+      const message = 'Bạn phải cung cấp đúng 1 trong 2 mã: TOTP hoặc OTP';
+
+      ctx.addIssue({
+        code: 'custom',
+        path: ['totpCode'],
+        message,
+      });
+
+      ctx.addIssue({
+        code: 'custom',
+        path: ['code'],
+        message,
+      });
+    }
+  });
+export type DisableTwoFactorBodyType = z.infer<typeof DisableTwoFactorBodySchema>;
