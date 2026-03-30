@@ -7,6 +7,7 @@ import { IP } from '../../shared/decorators/ip.decorator';
 import { UserAgent } from '../../shared/decorators/user-agent.decorator';
 import { MessageResDTO } from '../../shared/dtos/response.dto';
 import {
+  DisableTwoFactorBodyDto,
   ForgotPasswordBodyDto,
   getAuthorizationUrlResDto,
   LoginBodyDto,
@@ -100,5 +101,11 @@ export class AuthController {
   @ZodSerializerDto(TwoFactorSetupResDto)
   setup2FA(@Body() _: EmptyBodyDTO, @ActiveUser('userId') userId: number) {
     return this.authService.setup2FA(userId);
+  }
+
+  @Post('2fa/disable')
+  @ZodSerializerDto(MessageResDTO)
+  disable2FA(@Body() body: DisableTwoFactorBodyDto, @ActiveUser('userId') userId: number) {
+    return this.authService.disable2FA({ ...body, userId });
   }
 }

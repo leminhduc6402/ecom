@@ -1,6 +1,7 @@
 import { HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { addMilliseconds } from 'date-fns';
 import ms, { StringValue } from 'ms';
+import { TwoFactorAuthService } from 'src/shared/services/2fa.service';
 import envConfig from '../../shared/config';
 import { TypeOfVerificationCode, TypeOfVerificationCodeType } from '../../shared/constants/auth.constant';
 import { generateOTP, isNotFoundError, isUniqueConstraintError } from '../../shared/helpers';
@@ -10,6 +11,7 @@ import { HashingService } from '../../shared/services/hashing.service';
 import { TokenService } from '../../shared/services/token.service';
 import { AccessTokenPayloadCreate } from '../../shared/types/jwt.type';
 import {
+  DisableTwoFactorBodyType,
   ForgotPasswordBodyType,
   LoginBodyType,
   RefreshTokenBodyType,
@@ -28,9 +30,9 @@ import {
   OTPExpiredException,
   RefreshTokenAlreadyUsedException,
   TOTPAlreadyEnabledException,
+  TOTPNotEnabledException,
 } from './error.model';
 import { RoleService } from './role.service';
-import { TwoFactorAuthService } from 'src/shared/services/2fa.service';
 
 @Injectable()
 export class AuthService {
@@ -314,5 +316,45 @@ export class AuthService {
     );
     //4. Trả về secret và uri
     return { secret, uri };
+  }
+
+  async disable2FA(data: DisableTwoFactorBodyType & { userId: number }) {
+    const { userId, totpCode, code } = data;
+    //1. Lấy thông tin user, kiểm tra xem user có tồn tại hay không, và xem đã bật 2FA chưa
+    const user = await this.sharedUserRepository.findUnique({ id: userId });
+    if (!user) {
+      throw EmailNotFoundException;
+    }
+    console.log(user);
+    if (!user.totpSecret) {
+      throw TOTPNotEnabledException;
+    }
+    //2. Kiểm tra totpCode có hợp lệ hay không
+    if (totpCode) {
+      const isTOTPValid = this.twoFactorAuthService.verifyTOTP({
+        email: user.email,
+        secret: user.totpSecret,
+        token: totpCode,
+      });
+      if (!isTOTPValid) {
+        throw InvalidTOTPException;
+      }
+    } else if (code) {
+      await this.validateVerificationCode({
+        email: user.email,
+        type: TypeOfVerificationCode.DISABLE_2FA,
+        code,
+      });
+    } else {
+      throw InvalidTOTPAndCodeException;
+    }
+    //3. Xóa totpSecret trong database
+    await this.authRepository.updateUser(
+      { id: userId },
+      {
+        totpSecret: null,
+      },
+    );
+    return { message: 'Vô hiệu hóa 2FA thành công' };
   }
 }
