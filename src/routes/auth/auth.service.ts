@@ -23,6 +23,8 @@ import {
   FailedToSendOTPException,
   InvalidOTPException,
   InvalidPasswordException,
+  InvalidTOTPAndCodeException,
+  InvalidTOTPException,
   OTPExpiredException,
   RefreshTokenAlreadyUsedException,
   TOTPAlreadyEnabledException,
@@ -137,6 +139,29 @@ export class AuthService {
     if (!isPasswordMatch) {
       throw InvalidPasswordException;
     }
+
+    if (user.totpSecret) {
+      if (!body.totpCode && !body.code) {
+        throw InvalidTOTPAndCodeException;
+      }
+      if (body.totpCode) {
+        const isTOTPValid = this.twoFactorAuthService.verifyTOTP({
+          email: user.email,
+          secret: user.totpSecret,
+          token: body.totpCode,
+        });
+        if (!isTOTPValid) {
+          throw InvalidTOTPException;
+        }
+      } else if (body.code) {
+        await this.validateVerificationCode({
+          email: user.email,
+          type: TypeOfVerificationCode.LOGIN,
+          code: body.code,
+        });
+      }
+    }
+
     const device = await this.authRepository.createDevice({
       userId: user.id,
       userAgent: body.userAgent,

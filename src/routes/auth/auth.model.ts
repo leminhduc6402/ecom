@@ -58,7 +58,25 @@ export const LoginBodySchema = UserSchema.pick({
     totpCode: z.string().length(6).optional(), // TOTP code for 2FA
     code: z.string().length(6).optional(), // Email OTP code
   })
-  .strict();
+  .strict()
+  .superRefine(({ totpCode, code }, ctx) => {
+    const hasTotpCode = totpCode !== undefined;
+    const hasCode = code !== undefined;
+    const message = 'Bạn chỉ nên cung cấp 1 trong 2 mã: TOTP hoặc OTP';
+    if (hasTotpCode && hasCode) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['totpCode'],
+        message,
+      });
+
+      ctx.addIssue({
+        code: 'custom',
+        path: ['code'],
+        message,
+      });
+    }
+  });
 export type LoginBodyType = z.infer<typeof LoginBodySchema>;
 
 // Login Response
