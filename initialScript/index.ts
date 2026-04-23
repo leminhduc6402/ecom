@@ -1,13 +1,13 @@
-import { PrismaService } from '../src/shared/services/prisma.service'
-import { RoleName } from '../src/shared/constants/role.constant'
-import envConfig from '../src/shared/config'
-import { HashingService } from '../src/shared/services/hashing.service'
+import { PrismaService } from '../src/shared/services/prisma.service';
+import { RoleName } from '../src/shared/constants/role.constant';
+import envConfig from '../src/shared/config';
+import { HashingService } from '../src/shared/services/hashing.service';
 
-const prisma = new PrismaService()
-const hashingService = new HashingService()
+const prisma = new PrismaService();
+const hashingService = new HashingService();
 const main = async () => {
-  const roleCount = await prisma.role.count()
-  if (roleCount > 0) throw new Error('Role already exists')
+  const roleCount = await prisma.role.count();
+  if (roleCount > 0) throw new Error('Role already exists');
   const roles = await prisma.role.createMany({
     data: [
       {
@@ -23,13 +23,13 @@ const main = async () => {
         description: 'Seller role',
       },
     ],
-  })
+  });
   const adminRole = await prisma.role.findFirstOrThrow({
     where: {
       name: RoleName.Admin,
     },
-  })
-  const hashedPassword = await hashingService.hash(envConfig.ADMIN_PASSWORD)
+  });
+  const hashedPassword = await hashingService.hash(envConfig.ADMIN_PASSWORD);
   const adminUser = await prisma.user.create({
     data: {
       email: envConfig.ADMIN_EMAIL,
@@ -38,10 +38,10 @@ const main = async () => {
       phoneNumber: envConfig.ADMIN_PHONE,
       roleId: adminRole.id,
     },
-  })
-  return { createdRoleCount: roles.count, adminUser }
-}
+  });
+  return { createdRoleCount: roles.count, adminUser };
+};
 
 main()
   .then(({ createdRoleCount, adminUser }) => console.log({ createdRoleCount, adminUser }))
-  .catch((e) => console.error(e))
+  .catch((e) => console.error(e));
