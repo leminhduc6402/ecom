@@ -1,18 +1,7 @@
 import z from 'zod';
 import { PermissionSchema } from '../permission/permission.model';
+import { RoleSchema } from 'src/shared/models/shared-role.model';
 
-export const RoleSchema = z.object({
-  id: z.number(),
-  name: z.string().max(500),
-  description: z.string().max(1000),
-  isActive: z.boolean(),
-
-  createdById: z.number().nullable(),
-  updatedById: z.number().nullable(),
-  deletedById: z.number().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
 export type RoleType = z.infer<typeof RoleSchema>;
 
 export const RoleWithPermissionsSchema = RoleSchema.extend({
