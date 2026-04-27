@@ -19,7 +19,6 @@ export class PermissionController {
   @Get()
   @ZodSerializerDto(GetPermissionsResDTO)
   findAll(@Query() query: GetPermissionsQueryDTO) {
-    console.log('>>> Check: ', query);
     return this.permissionService.findAll({ page: query.page, limit: query.limit });
   }
 
