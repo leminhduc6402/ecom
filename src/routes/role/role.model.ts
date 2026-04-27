@@ -1,6 +1,6 @@
 import z from 'zod';
-import { PermissionSchema } from '../permission/permission.model';
 import { RoleSchema } from 'src/shared/models/shared-role.model';
+import { PermissionSchema } from 'src/shared/models/shared-permission.model';
 
 export type RoleType = z.infer<typeof RoleSchema>;
 
