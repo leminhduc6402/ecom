@@ -3,7 +3,8 @@ import { RoleRepository } from './role.repo';
 import { NotFoundRecordException } from 'src/shared/error';
 import { CreateRoleBodyType, GetRolesQueryType, UpdateRoleBodyType } from './role.model';
 import { isNotFoundError, isUniqueConstraintError } from 'src/shared/helpers';
-import { RoleAlreadyExistsException } from './role.error';
+import { ProhibitedActionOnBaseRoleException, RoleAlreadyExistsException } from './role.error';
+import { RoleName } from 'src/shared/constants/role.constant';
 
 @Injectable()
 export class RoleService {
@@ -38,12 +39,21 @@ export class RoleService {
 
   async update({ id, data, updatedById }: { id: number; data: UpdateRoleBodyType; updatedById: number }) {
     try {
-      const role = await this.roleRepository.update({
+      const role = await this.roleRepository.findById(id);
+      if (!role) {
+        throw NotFoundRecordException;
+      }
+      // Không cho phép cập nhật role Admin
+      if (role.name === RoleName.Admin) {
+        throw ProhibitedActionOnBaseRoleException;
+      }
+
+      const updatedRole = await this.roleRepository.update({
         id,
         updatedById,
         data,
       });
-      return role;
+      return updatedRole;
     } catch (error) {
       if (isNotFoundError(error)) {
         throw NotFoundRecordException;
@@ -60,6 +70,15 @@ export class RoleService {
 
   async delete({ id, deletedById }: { id: number; deletedById: number }) {
     try {
+      const role = await this.roleRepository.findById(id);
+      if (!role) {
+        throw NotFoundRecordException;
+      }
+      // Không cho phép xóa các role cơ bản
+      if (role.name === RoleName.Admin || role.name === RoleName.Client || role.name === RoleName.Seller) {
+        throw ProhibitedActionOnBaseRoleException;
+      }
+
       await this.roleRepository.delete({ id, deletedById });
       return {
         message: 'Delete successfully',
