@@ -34,7 +34,7 @@ export const CreatePermissionBodySchema = PermissionSchema.pick({
   name: true,
   path: true,
   method: true,
-  // module: true,
+  module: true,
 }).strict();
 export type CreatePermissionBodyType = z.infer<typeof CreatePermissionBodySchema>;
 
@@ -42,6 +42,6 @@ export const UpdatePermissionBodySchema = PermissionSchema.pick({
   name: true,
   path: true,
   method: true,
-  // module: true,
+  module: true,
 }).strict();
 export type UpdatePermissionBodyType = z.infer<typeof UpdatePermissionBodySchema>;

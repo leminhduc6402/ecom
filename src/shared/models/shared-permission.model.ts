@@ -5,6 +5,7 @@ export const PermissionSchema = z.object({
   id: z.number(),
   name: z.string().max(500),
   description: z.string().max(1000),
+  module: z.string().max(500),
   path: z.string().max(500),
   method: z.enum([
     HTTPMethod.GET,
@@ -15,7 +16,6 @@ export const PermissionSchema = z.object({
     HTTPMethod.OPTIONS,
     HTTPMethod.HEAD,
   ]),
-  module: z.string().max(500),
 
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),

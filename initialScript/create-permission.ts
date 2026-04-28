@@ -16,18 +16,20 @@ async function bootstrap() {
     throw new Error('Router not found');
   }
   const permissionsInDb = await prisma.permission.findMany({ where: { deletedAt: null } });
-  const availableRoutes: { path: string; method: keyof typeof HTTPMethod; name: string }[] = router.stack
-    .filter((layer) => layer.route)
-    .map((layer) => {
-      const path = layer.route.path;
-      const method = Object.keys(layer.route.methods)[0].toUpperCase() as keyof typeof HTTPMethod;
-
-      return {
-        path,
-        method,
-        name: `${method} ${path}`,
-      };
-    });
+  const availableRoutes: { path: string; method: keyof typeof HTTPMethod; name: string; module: string }[] =
+    router.stack
+      .filter((layer) => layer.route)
+      .map((layer) => {
+        const path = layer.route.path;
+        const method = Object.keys(layer.route.methods)[0].toUpperCase() as keyof typeof HTTPMethod;
+        const module = String(path.split('/')[1]).toUpperCase();
+        return {
+          path,
+          method,
+          name: `${method} ${path}`,
+          module,
+        };
+      });
   //Tạo object map với key là method + path để dễ dàng kiểm tra
   const permissionInDbMap: Record<string, (typeof permissionsInDb)[0]> = permissionsInDb.reduce((acc, item) => {
     acc[`${item.method}-${item.path}`] = item;
