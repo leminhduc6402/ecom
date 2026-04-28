@@ -39,14 +39,7 @@ export class RoleService {
 
   async update({ id, data, updatedById }: { id: number; data: UpdateRoleBodyType; updatedById: number }) {
     try {
-      const role = await this.roleRepository.findById(id);
-      if (!role) {
-        throw NotFoundRecordException;
-      }
-      // Không cho phép cập nhật role Admin
-      if (role.name === RoleName.Admin) {
-        throw ProhibitedActionOnBaseRoleException;
-      }
+      await this.verifyRole(id);
 
       const updatedRole = await this.roleRepository.update({
         id,
@@ -70,15 +63,7 @@ export class RoleService {
 
   async delete({ id, deletedById }: { id: number; deletedById: number }) {
     try {
-      const role = await this.roleRepository.findById(id);
-      if (!role) {
-        throw NotFoundRecordException;
-      }
-      // Không cho phép xóa các role cơ bản
-      if (role.name === RoleName.Admin || role.name === RoleName.Client || role.name === RoleName.Seller) {
-        throw ProhibitedActionOnBaseRoleException;
-      }
-
+      await this.verifyRole(id);
       await this.roleRepository.delete({ id, deletedById });
       return {
         message: 'Delete successfully',
@@ -88,6 +73,18 @@ export class RoleService {
         throw NotFoundRecordException;
       }
       throw error;
+    }
+  }
+
+  private async verifyRole(roleId: number) {
+    const role = await this.roleRepository.findById(roleId);
+    if (!role) {
+      throw NotFoundRecordException;
+    }
+    const baseRoles: string[] = [RoleName.Admin, RoleName.Client, RoleName.Seller];
+
+    if (baseRoles.includes(role.name)) {
+      throw ProhibitedActionOnBaseRoleException;
     }
   }
 }
