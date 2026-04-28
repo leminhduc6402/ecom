@@ -11,7 +11,7 @@ export class RoleService {
     if (this.clientRoleId) {
       return this.clientRoleId;
     }
-    const role: RoleType | null = await this.prismaService.$queryRaw`
+    const role: RoleType[] | null = await this.prismaService.$queryRaw`
       SELECT * FROM "Role"
       WHERE name = ${RoleName.Client}
         AND "deletedAt" IS NULL
@@ -26,7 +26,7 @@ export class RoleService {
     if (!role) {
       throw new Error('Role CLIENT not found');
     }
-    this.clientRoleId = role.id;
-    return role.id;
+    this.clientRoleId = role[0].id;
+    return role[0].id;
   }
 }

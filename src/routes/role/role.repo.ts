@@ -32,7 +32,7 @@ export class RoleRepository {
     return this.prismaService.role.findUnique({
       where: { id, deletedAt: null },
       include: {
-        permissions: true,
+        permissions: { where: { deletedAt: null } },
       },
     });
   }
@@ -46,7 +46,27 @@ export class RoleRepository {
     });
   }
 
-  update({ id, data, updatedById }: { id: number; data: UpdateRoleBodyType; updatedById: number }): Promise<RoleType> {
+  async update({
+    id,
+    data,
+    updatedById,
+  }: {
+    id: number;
+    data: UpdateRoleBodyType;
+    updatedById: number;
+  }): Promise<RoleType> {
+    // Kiểm tra permission đã bị xóa (mềm) thì không cho phép cập nhật
+    if (data.permissionIds.length > 0) {
+      const permissions = await this.prismaService.permission.findMany({
+        where: { id: { in: data.permissionIds } },
+      });
+      const deletedPermission = permissions.filter((permission) => permission.deletedAt !== null);
+      if (deletedPermission.length > 0) {
+        const deletedPermissionIds = deletedPermission.map((permission) => permission.id).join(', ');
+        throw new Error(`Permission with id:${deletedPermissionIds} has been deleted`);
+      }
+    }
+
     return this.prismaService.role.update({
       where: { id, deletedAt: null },
       data: {

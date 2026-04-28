@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { RoleRepository } from './role.repo';
 import { NotFoundRecordException } from 'src/shared/error';
 import { CreateRoleBodyType, GetRolesQueryType, UpdateRoleBodyType } from './role.model';
@@ -50,6 +50,9 @@ export class RoleService {
       }
       if (isUniqueConstraintError(error)) {
         throw RoleAlreadyExistsException;
+      }
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
       }
       throw error;
     }

@@ -91,7 +91,7 @@ export class AuthService {
         this.authRepository.deleteVerificationCode({
           email_type: {
             email: body.email,
-            type: TypeOfVerificationCode.FORGOT_PASSWORD,
+            type: TypeOfVerificationCode.REGISTER,
           },
         }),
       ]);
@@ -110,7 +110,7 @@ export class AuthService {
     if (body.type === TypeOfVerificationCode.REGISTER && user) {
       throw EmailAlreadyExistsException;
     }
-    if (body.type !== TypeOfVerificationCode.FORGOT_PASSWORD && !user) {
+    if (body.type === TypeOfVerificationCode.FORGOT_PASSWORD && !user) {
       throw EmailNotFoundException;
     }
     const otp = generateOTP();
