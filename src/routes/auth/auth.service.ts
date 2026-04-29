@@ -31,14 +31,14 @@ import {
   TOTPAlreadyEnabledException,
   TOTPNotEnabledException,
 } from './auth.error';
-import { RoleService } from './role.service';
 import { InvalidPasswordException } from 'src/shared/error';
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly hashingService: HashingService,
-    private readonly roleService: RoleService,
+    private readonly roleRepository: SharedRoleRepository,
     private readonly authRepository: AuthRepository,
     private readonly sharedUserRepository: SharedUserRepository,
     private readonly emailService: EmailService,
@@ -77,7 +77,7 @@ export class AuthService {
         type: TypeOfVerificationCode.REGISTER,
         code: body.code,
       });
-      const clientRoleId = await this.roleService.getClientRoleId();
+      const clientRoleId = await this.roleRepository.getClientRoleId();
       const hashedPassword = await this.hashingService.hash(body.password);
 
       const [user] = await Promise.all([

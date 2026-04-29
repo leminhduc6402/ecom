@@ -6,9 +6,9 @@ import { GoogleAuthStateType } from './auth.model';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthRepository } from './auth.repo';
 import { HashingService } from '../../shared/services/hashing.service';
-import { RoleService } from './role.service';
 import { AuthService } from './auth.service';
 import { GoogleUserInfoError } from './auth.error';
+import { SharedRoleRepository } from 'src/shared/repositories/shared-role.repo';
 
 @Injectable()
 export class GoogleService {
@@ -16,7 +16,7 @@ export class GoogleService {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly hashingService: HashingService,
-    private readonly roleService: RoleService,
+    private readonly sharedRoleRepository: SharedRoleRepository,
     private readonly authService: AuthService,
   ) {
     this.oauth2Client = new google.auth.OAuth2(
@@ -75,7 +75,7 @@ export class GoogleService {
       });
       // Nếu không có user tức là người mới, vậy nên sẽ tiến hành đăng ký
       if (!user) {
-        const clientRoleId = await this.roleService.getClientRoleId();
+        const clientRoleId = await this.sharedRoleRepository.getClientRoleId();
         const randomPassword = uuidv4();
         const hashedPassword = await this.hashingService.hash(String(randomPassword));
         user = await this.authRepository.createUserIncludeRole({

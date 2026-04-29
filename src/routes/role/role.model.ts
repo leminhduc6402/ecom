@@ -2,7 +2,7 @@ import z from 'zod';
 import { RoleSchema } from 'src/shared/models/shared-role.model';
 import { PermissionSchema } from 'src/shared/models/shared-permission.model';
 
-export type RoleType = z.infer<typeof RoleSchema>;
+// export type RoleType = z.infer<typeof RoleSchema>;
 
 export const RoleWithPermissionsSchema = RoleSchema.extend({
   permissions: z.array(PermissionSchema),
