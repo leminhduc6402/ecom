@@ -3,6 +3,7 @@ import { TypeOfVerificationCodeType } from '../../shared/constants/auth.constant
 import { UserType } from '../../shared/models/shared-user.model';
 import { PrismaService } from '../../shared/services/prisma.service';
 import { DeviceType, RefreshTokenType, RoleType, VerificationCodeType } from './auth.model';
+import { WhereUniqueUserType } from 'src/shared/repositories/shared-user.repo';
 
 @Injectable()
 export class AuthRepository {
@@ -63,9 +64,7 @@ export class AuthRepository {
   ) {
     return this.prismaService.device.create({ data });
   }
-  async findUniqueUserIncludeRole(
-    uniqueObject: { email: string } | { id: number },
-  ): Promise<(UserType & { role: RoleType }) | null> {
+  async findUniqueUserIncludeRole(uniqueObject: WhereUniqueUserType): Promise<(UserType & { role: RoleType }) | null> {
     return await this.prismaService.user.findUnique({
       where: uniqueObject,
       include: {
@@ -100,13 +99,6 @@ export class AuthRepository {
   deleteRefreshToken(uniqueObject: { token: string }): Promise<RefreshTokenType> {
     return this.prismaService.refreshToken.delete({
       where: uniqueObject,
-    });
-  }
-
-  updateUser(where: { id: number } | { email: string }, data: Partial<Omit<UserType, 'id'>>): Promise<UserType> {
-    return this.prismaService.user.update({
-      where,
-      data,
     });
   }
 

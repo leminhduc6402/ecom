@@ -8,7 +8,7 @@ import { AuthRepository } from './auth.repo';
 import { HashingService } from '../../shared/services/hashing.service';
 import { RoleService } from './role.service';
 import { AuthService } from './auth.service';
-import { GoogleUserInfoError } from './error.model';
+import { GoogleUserInfoError } from './auth.error';
 
 @Injectable()
 export class GoogleService {

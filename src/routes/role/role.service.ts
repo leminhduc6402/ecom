@@ -1,10 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { RoleRepository } from './role.repo';
+import { Injectable } from '@nestjs/common';
+import { RoleName } from 'src/shared/constants/role.constant';
 import { NotFoundRecordException } from 'src/shared/error';
-import { CreateRoleBodyType, GetRolesQueryType, UpdateRoleBodyType } from './role.model';
 import { isNotFoundError, isUniqueConstraintError } from 'src/shared/helpers';
 import { ProhibitedActionOnBaseRoleException, RoleAlreadyExistsException } from './role.error';
-import { RoleName } from 'src/shared/constants/role.constant';
+import { CreateRoleBodyType, GetRolesQueryType, UpdateRoleBodyType } from './role.model';
+import { RoleRepository } from './role.repo';
 
 @Injectable()
 export class RoleService {
@@ -53,9 +53,6 @@ export class RoleService {
       }
       if (isUniqueConstraintError(error)) {
         throw RoleAlreadyExistsException;
-      }
-      if (error instanceof Error) {
-        throw new BadRequestException(error.message);
       }
       throw error;
     }
