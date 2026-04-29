@@ -7,6 +7,9 @@ export function isUniqueConstraintError(error: any): error is Prisma.PrismaClien
 export function isNotFoundError(error: any): error is Prisma.PrismaClientKnownRequestError {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025';
 }
+export function isForeignKeyConstraintError(error: any): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003';
+}
 export const generateOTP = (): string => {
   return String(randomInt(0, 1000000)).padStart(6, '0');
 };
