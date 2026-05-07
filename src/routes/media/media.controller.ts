@@ -1,11 +1,11 @@
 import {
+  Body,
   Controller,
   FileTypeValidator,
   Get,
   MaxFileSizeValidator,
   NotFoundException,
   Param,
-  ParseFilePipe,
   Post,
   Res,
   UploadedFiles,
@@ -15,6 +15,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import path from 'path';
 import { MediaService } from 'src/routes/media/media.service';
+import { ParseFilePipeUnlinkPipe } from 'src/routes/media/parse-file-pipe-unlink.pipe';
 import { UPLOAD_DIR } from 'src/shared/constants/other.constant';
 import { IsPublic } from 'src/shared/decorators/auth.decorator';
 
@@ -31,7 +32,7 @@ export class MediaController {
   )
   uploadFile(
     @UploadedFiles(
-      new ParseFilePipe({
+      new ParseFilePipeUnlinkPipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 2MB
           new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp)$/, skipMagicNumbersValidation: true }),
@@ -55,5 +56,11 @@ export class MediaController {
         res.status(notfound.getStatus()).json(notfound.getResponse());
       }
     });
+  }
+
+  @IsPublic()
+  @Post('images/upload/presigned-url')
+  async getPresignedUrl(@Body() body: { filename: string }) {
+    return this.mediaService.getPresignedUrl(body);
   }
 }
