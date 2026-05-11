@@ -1,0 +1,4 @@
+{
+  "NOT_FOUND": "The request resource not found",
+  "ALREADY_EXISTS": "The request resource already exists"
+}
