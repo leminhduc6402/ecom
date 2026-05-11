@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "BrandTranslation_brandId_languageId_key" ON "BrandTranslation" ("brandId", "languageId") WHERE "deletedAt" IS NULL;
