@@ -6,6 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "test-script": "tsx test-script.ts",
     "initSeedData": "tsx initialScript/index.ts",
     "initPermissions": "tsx initialScript/create-permission.ts",
     "build": "nest build",
