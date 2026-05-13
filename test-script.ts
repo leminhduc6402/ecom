@@ -67,7 +67,7 @@ const data: Data = {
     { value: 'XL-Tím', price: 0, stock: 100, image: '' },
   ],
 };
-
+console.log(data);
 function generateSKUs(variants: Variant[]): SKU[] {
   if (variants.length === 0) return [];
 

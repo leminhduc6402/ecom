@@ -14,17 +14,14 @@ export const ProductTranslationSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
 });
-export type ProductTranslationType = z.infer<typeof ProductTranslationSchema>;
 
 export const GetProductTranslationParamsSchema = z
   .object({
     productTranslationId: z.coerce.number().int().positive(),
   })
   .strict();
-export type GetProductTranslationParamsType = z.infer<typeof GetProductTranslationParamsSchema>;
 
 export const GetProductTranslationDetailResSchema = ProductTranslationSchema;
-export type GetProductTranslationDetailResType = z.infer<typeof GetProductTranslationDetailResSchema>;
 
 export const CreateProductTranslationBodySchema = ProductTranslationSchema.pick({
   productId: true,
@@ -32,10 +29,14 @@ export const CreateProductTranslationBodySchema = ProductTranslationSchema.pick(
   description: true,
   languageId: true,
 }).strict();
-export type CreateProductTranslationBodyType = z.infer<typeof CreateProductTranslationBodySchema>;
 
 export const UpdateProductTranslationBodySchema = CreateProductTranslationBodySchema;
-export type UpdateProductTranslationBodyType = z.infer<typeof UpdateProductTranslationBodySchema>;
 
 export const DeleteProductTranslationParamsSchema = GetProductTranslationParamsSchema;
+
+export type ProductTranslationType = z.infer<typeof ProductTranslationSchema>;
+export type GetProductTranslationParamsType = z.infer<typeof GetProductTranslationParamsSchema>;
+export type GetProductTranslationDetailResType = z.infer<typeof GetProductTranslationDetailResSchema>;
+export type CreateProductTranslationBodyType = z.infer<typeof CreateProductTranslationBodySchema>;
+export type UpdateProductTranslationBodyType = z.infer<typeof UpdateProductTranslationBodySchema>;
 export type DeleteProductTranslationParamsType = z.infer<typeof DeleteProductTranslationParamsSchema>;

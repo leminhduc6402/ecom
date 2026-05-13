@@ -56,13 +56,13 @@ export type VariantsType = z.infer<typeof VariantsSchema>;
 
 export const ProductSchema = z.object({
   id: z.number(),
-  publishedAt: z.date().nullable(),
-  name: z.string().trim().max(500),
-  basePrice: z.number().min(0),
-  virtualPrice: z.number().min(0),
+  publishedAt: z.coerce.date().nullable(),
+  name: z.string().max(500),
+  basePrice: z.number().positive(),
+  virtualPrice: z.number().positive(),
   brandId: z.number().positive(),
   images: z.array(z.string()),
-  variants: VariantsSchema,
+  variants: VariantsSchema, // Json field represented as a record
 
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
