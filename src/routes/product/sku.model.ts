@@ -2,18 +2,18 @@ import { z } from 'zod';
 
 export const SKUSchema = z.object({
   id: z.number(),
-  value: z.string(),
-  price: z.number().positive(),
-  stock: z.number().positive(),
+  value: z.string().trim(),
+  price: z.number().min(0),
+  stock: z.number().min(0),
   images: z.array(z.string()),
   productId: z.number(),
 
-  createdById: z.number().nullable(),
+  createdById: z.number(),
   updatedById: z.number().nullable(),
   deletedById: z.number().nullable(),
   deletedAt: z.date().nullable(),
-  createdBy: z.date(),
-  updatedBy: z.date(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 export type SKUSchemaType = z.infer<typeof SKUSchema>;
 

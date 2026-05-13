@@ -4,31 +4,21 @@ import { BrandIncludeTranslationSchema } from 'src/shared/models/shared-brand.mo
 import { CategoryIncludeTranslationSchema } from 'src/shared/models/shared-category.model';
 import z from 'zod';
 
-function generateSKUs(variants: VariantsType[]) {
-  if (variants.length === 0) return [];
+function generateSKUs(variants: VariantsType) {
+  // Hàm hỗ trợ để tạo tất cả tổ hợp
+  function getCombinations(arrays: string[][]): string[] {
+    return arrays.reduce((acc, curr) => acc.flatMap((x) => curr.map((y) => `${x}${x ? '-' : ''}${y}`)), ['']);
+  }
 
-  // Lấy danh sách options của từng variant
-  const optionGroups = variants.map((v) => v.options);
+  // Lấy mảng các options từ variants
+  const options = variants.map((variant) => variant.options);
 
-  // Hàm tạo tổ hợp (cartesian product)
-  const combinations = optionGroups.reduce<string[][]>(
-    (acc, options) => {
-      const result: string[][] = [];
+  // Tạo tất cả tổ hợp
+  const combinations = getCombinations(options);
 
-      for (const prev of acc) {
-        for (const option of options) {
-          result.push([...prev, option]);
-        }
-      }
-
-      return result;
-    },
-    [[]],
-  );
-
-  // Convert sang SKU[]
-  return combinations.map((combo) => ({
-    value: combo.join('-'),
+  // Chuyển tổ hợp thành SKU objects
+  return combinations.map((value) => ({
+    value,
     price: 0,
     stock: 100,
     image: '',
@@ -62,14 +52,14 @@ export const VariantsSchema = z.array(VariantSchema).superRefine((variants, ctx)
     }
   }
 });
-export type VariantsType = z.infer<typeof VariantSchema>;
+export type VariantsType = z.infer<typeof VariantsSchema>;
 
 export const ProductSchema = z.object({
   id: z.number(),
-  publishedAt: z.coerce.date().nullable(),
-  name: z.string().max(500),
-  basePrice: z.number().positive(),
-  virtualPrice: z.number().positive(),
+  publishedAt: z.date().nullable(),
+  name: z.string().trim().max(500),
+  basePrice: z.number().min(0),
+  virtualPrice: z.number().min(0),
   brandId: z.number().positive(),
   images: z.array(z.string()),
   variants: VariantsSchema,
@@ -78,8 +68,8 @@ export const ProductSchema = z.object({
   updatedById: z.number().nullable(),
   deletedById: z.number().nullable(),
   deletedAt: z.date().nullable(),
-  createdBy: z.date(),
-  updatedBy: z.date(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 export type ProductType = z.infer<typeof ProductSchema>;
 
@@ -101,9 +91,9 @@ export const GetProductsResSchema = z.object({
     }),
   ),
   totalItems: z.number(),
-  page: z.number(),
-  limit: z.number(),
-  totalPages: z.number(),
+  page: z.number(), // Số trang hiện tại
+  limit: z.number(), // Số item trên 1 trang
+  totalPages: z.number(), // Tổng số trang
 });
 export type GetProductsResType = z.infer<typeof GetProductsResSchema>;
 
