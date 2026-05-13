@@ -235,7 +235,7 @@ export class ProductRepo {
   }
 
   // Delete product by id
-  async delete({ id, deletedById }: { id: number; deletedById: number }, isHard: boolean): Promise<ProductType> {
+  async delete({ id, deletedById }: { id: number; deletedById: number }, isHard?: boolean): Promise<ProductType> {
     if (isHard) {
       const [product] = await Promise.all([
         this.prismaService.product.delete({

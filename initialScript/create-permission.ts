@@ -3,34 +3,37 @@ import { AppModule } from 'src/app.module';
 import { HTTPMethod, RoleName } from 'src/shared/constants/role.constant';
 import { PrismaService } from 'src/shared/services/prisma.service';
 
+const SellerModule = ['AUTH', 'MEDIA', 'MANAGE-PRODUCT', 'PRODUCT-TRANSLATION', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS'];
+const ClientModule = ['AUTH', 'MEDIA', 'PROFILE', 'CART', 'ORDERS', 'REVIEWS'];
 const prisma = new PrismaService();
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.init();
-
+  await app.listen(3010);
   const server = app.getHttpAdapter().getInstance();
-
-  const router = server._router || server.router;
-
-  if (!router) {
-    throw new Error('Router not found');
-  }
-  const permissionsInDb = await prisma.permission.findMany({ where: { deletedAt: null } });
+  const router = server.router;
+  const permissionsInDb = await prisma.permission.findMany({
+    where: {
+      deletedAt: null,
+    },
+  });
   const availableRoutes: { path: string; method: keyof typeof HTTPMethod; name: string; module: string }[] =
     router.stack
-      .filter((layer) => layer.route)
       .map((layer) => {
-        const path = layer.route.path;
-        const method = Object.keys(layer.route.methods)[0].toUpperCase() as keyof typeof HTTPMethod;
-        const module = String(path.split('/')[1]).toUpperCase();
-        return {
-          path,
-          method,
-          name: `${method} ${path}`,
-          module,
-        };
-      });
-  //Tạo object map với key là method + path để dễ dàng kiểm tra
+        if (layer.route) {
+          const path = layer.route?.path;
+          const method = String(layer.route?.stack[0].method).toUpperCase() as keyof typeof HTTPMethod;
+          const moduleName = String(path.split('/')[1]).toUpperCase();
+          return {
+            path,
+            method,
+            name: method + ' ' + path,
+            module: moduleName,
+          };
+        }
+      })
+      .filter((item) => item !== undefined);
+  // Tạo object permissionInDbMap với key là [method-path]
   const permissionInDbMap: Record<string, (typeof permissionsInDb)[0]> = permissionsInDb.reduce((acc, item) => {
     acc[`${item.method}-${item.path}`] = item;
     return acc;
@@ -66,24 +69,52 @@ async function bootstrap() {
   if (routesToAdd.length > 0) {
     const permissionsToAdd = await prisma.permission.createMany({
       data: routesToAdd,
-      skipDuplicates: false,
+      skipDuplicates: true,
     });
     console.log('Added permissions:', permissionsToAdd.count);
   } else {
     console.log('No permissions to add');
   }
-  // Lấy lại permissions từ database sau khi thêm mới hoặc bị xóa
-  const updatedPermissionsInDb = await prisma.permission.findMany({ where: { deletedAt: null } });
-  // Cập nhật lại các permission trong admin role
+
+  // Lấy lại permissions trong database sau khi thêm mới (hoặc bị xóa)
+  const updatedPermissionsInDb = await prisma.permission.findMany({
+    where: {
+      deletedAt: null,
+    },
+  });
+  const adminPermissionIds = updatedPermissionsInDb.map((item) => ({ id: item.id }));
+  const sellerPermissionIds = updatedPermissionsInDb
+    .filter((item) => SellerModule.includes(item.module))
+    .map((item) => ({ id: item.id }));
+  const clientPermissionIds = updatedPermissionsInDb
+    .filter((item) => ClientModule.includes(item.module))
+    .map((item) => ({ id: item.id }));
+
+  await Promise.all([
+    updateRole(adminPermissionIds, RoleName.Admin),
+    updateRole(sellerPermissionIds, RoleName.Seller),
+    updateRole(clientPermissionIds, RoleName.Client),
+  ]);
+  process.exit(0);
+}
+
+const updateRole = async (permissionIds: { id: number }[], roleName: string) => {
+  // Cập nhật lại các permissions trong Admin Role
+  const role = await prisma.role.findFirstOrThrow({
+    where: {
+      name: roleName,
+      deletedAt: null,
+    },
+  });
   await prisma.role.update({
-    where: { name: RoleName.Admin, deletedAt: null },
+    where: {
+      id: role.id,
+    },
     data: {
       permissions: {
-        set: updatedPermissionsInDb.map((permission) => ({ id: permission.id })),
+        set: permissionIds,
       },
     },
   });
-
-  process.exit(0);
-}
+};
 bootstrap();
