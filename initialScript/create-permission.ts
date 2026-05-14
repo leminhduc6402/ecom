@@ -117,4 +117,4 @@ const updateRole = async (permissionIds: { id: number }[], roleName: string) => 
     },
   });
 };
-bootstrap();
+void bootstrap();
