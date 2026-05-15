@@ -10,10 +10,9 @@ export class ProductService {
 
   async list(props: { query: GetProductsQueryType }) {
     const data = await this.productRepo.list({
-      page: props.query.page,
-      limit: props.query.limit,
       languageId: I18nContext.current()?.lang as string,
       isPublic: true,
+      ...props.query,
     });
     return data;
   }

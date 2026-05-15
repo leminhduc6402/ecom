@@ -42,10 +42,8 @@ export class ManageProductService {
       createdById: props.query.createdById,
     });
     const data = await this.productRepo.list({
-      page: props.query.page,
-      limit: props.query.limit,
       languageId: I18nContext.current()?.lang as string,
-      createdById: props.query.createdById,
+      ...props.query,
     });
     return data;
   }

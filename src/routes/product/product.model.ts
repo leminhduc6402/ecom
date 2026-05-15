@@ -83,7 +83,14 @@ export const GetProductsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().default(10),
   name: z.string().optional(),
-  brandIds: z.array(z.coerce.number().int().positive()).optional(),
+  brandIds: z
+    .preprocess((value) => {
+      if (typeof value === 'string') {
+        return [Number(value)];
+      }
+      return value;
+    }, z.array(z.coerce.number().int().positive()))
+    .optional(),
   categories: z.array(z.coerce.number().int().positive()).optional(),
   minPrice: z.coerce.number().positive().optional(),
   maxPrice: z.coerce.number().positive().optional(),
@@ -95,7 +102,7 @@ export type GetProductsQueryType = z.infer<typeof GetProductsQuerySchema>;
  * Dành cho admin và staff
  */
 export const GetManageProductsQuerySchema = GetProductsQuerySchema.extend({
-  isPublic: z.boolean().optional(),
+  isPublic: z.preprocess((value) => value === 'true', z.boolean()).optional(),
   createdById: z.coerce.number().int().positive(),
 });
 export type GetManageProductsQueryType = z.infer<typeof GetManageProductsQuerySchema>;

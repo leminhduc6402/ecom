@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from 'src/generated/prisma/client';
 import {
   CreateProductBodyType,
   GetProductDetailResType,
@@ -40,11 +41,47 @@ export class ProductRepo {
   }): Promise<GetProductsResType> {
     const skip = (page - 1) * limit;
     const take = limit;
-    const where = {
+    let where: Prisma.ProductWhereInput = {
       deletedAt: null,
       createdById: createdById ? createdById : undefined,
-      publishedAt: isPublic ? { lte: new Date(), not: null } : undefined,
     };
+
+    if (isPublic === true) {
+      where.publishedAt = {
+        lte: new Date(),
+        not: null,
+      };
+    } else if (isPublic === false) {
+      where = {
+        ...where,
+        OR: [{ publishedAt: null }, { publishedAt: { gt: new Date() } }],
+      };
+    }
+    if (name) {
+      where.name = {
+        contains: name,
+      };
+    }
+    if (brandIds && brandIds.length > 0) {
+      where.brandId = {
+        in: brandIds,
+      };
+    }
+    if (categories && categories.length > 0) {
+      where.categories = {
+        some: {
+          id: {
+            in: categories,
+          },
+        },
+      };
+    }
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      where.basePrice = {
+        gte: minPrice,
+        lte: maxPrice,
+      };
+    }
     const [totalItems, data] = await Promise.all([
       this.prismaService.product.count({
         where,
@@ -91,12 +128,23 @@ export class ProductRepo {
     languageId: string;
     isPublic?: boolean;
   }): Promise<GetProductDetailResType | null> {
+    let where: Prisma.ProductWhereUniqueInput = {
+      id: productId,
+      deletedAt: null,
+    };
+    if (isPublic === true) {
+      where.publishedAt = {
+        lte: new Date(),
+        not: null,
+      };
+    } else if (isPublic === false) {
+      where = {
+        ...where,
+        OR: [{ publishedAt: null }, { publishedAt: { gt: new Date() } }],
+      };
+    }
     return this.prismaService.product.findUnique({
-      where: {
-        id: productId,
-        deletedAt: null,
-        publishedAt: isPublic ? { lte: new Date(), not: null } : undefined,
-      },
+      where,
       include: {
         productTranslations: {
           where: languageId === ALL_LANGUAGE_CODE ? { deletedAt: null } : { languageId, deletedAt: null },
