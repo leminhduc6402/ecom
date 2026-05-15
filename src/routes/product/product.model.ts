@@ -76,6 +76,9 @@ export const ProductSchema = z.object({
 });
 export type ProductType = z.infer<typeof ProductSchema>;
 
+/**
+ * Dành cho client và guest
+ */
 export const GetProductsQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().default(10),
@@ -84,8 +87,18 @@ export const GetProductsQuerySchema = z.object({
   categories: z.array(z.coerce.number().int().positive()).optional(),
   minPrice: z.coerce.number().positive().optional(),
   maxPrice: z.coerce.number().positive().optional(),
+  createdById: z.coerce.number().int().positive().optional(),
 });
 export type GetProductsQueryType = z.infer<typeof GetProductsQuerySchema>;
+
+/**
+ * Dành cho admin và staff
+ */
+export const GetManageProductsQuerySchema = GetProductsQuerySchema.extend({
+  isPublic: z.boolean().optional(),
+  createdById: z.coerce.number().int().positive(),
+});
+export type GetManageProductsQueryType = z.infer<typeof GetManageProductsQuerySchema>;
 
 export const GetProductsResSchema = z.object({
   data: z.array(

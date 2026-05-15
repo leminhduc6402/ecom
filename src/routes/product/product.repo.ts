@@ -292,13 +292,27 @@ export class ProductRepo {
           },
         }),
       ]);
-      return product;
+      return this.prismaService.product.delete({
+        where: {
+          id,
+        },
+      });
     } else {
       const now = new Date();
       const [product] = await Promise.all([
         this.prismaService.product.update({
           where: {
             id,
+            deletedAt: null,
+          },
+          data: {
+            deletedAt: now,
+            deletedById,
+          },
+        }),
+        this.prismaService.productTranslation.updateMany({
+          where: {
+            productId: id,
             deletedAt: null,
           },
           data: {
