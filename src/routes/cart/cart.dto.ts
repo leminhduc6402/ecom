@@ -10,7 +10,7 @@ import {
 
 export class CartItemDTO extends createZodDto(CartItemSchema) {}
 
-export class GetCartItemResDTO extends createZodDto(GetCartResSchema) {}
+export class GetCartResDTO extends createZodDto(GetCartResSchema) {}
 
 export class GetCartItemParamsDTO extends createZodDto(GetCartItemParamsSchema) {}
 
