@@ -38,7 +38,6 @@ export class CartController {
   @Post('delete')
   @ZodSerializerDto(MessageResDTO)
   deleteCart(@Body() body: DeleteCartBodyDTO, @ActiveUser('userId') userId: number) {
-    console.log('body', body);
     return this.cartService.deleteCart(userId, body);
   }
 }
