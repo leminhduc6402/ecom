@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, OrderStatus } from 'src/generated/prisma/client';
 import {
+  CannotCancelOrderException,
   NotFoundCartItemException,
   OrderNotFoundException,
   OutOfStockSKUException,
@@ -203,7 +204,18 @@ export class OrderRepo {
 
   async cancel(userId: number, orderId: number): Promise<CancelOrderResType> {
     try {
-      const order = await this.prismaService.order.update({
+      const order = await this.prismaService.order.findUnique({
+        where: {
+          id: orderId,
+          userId,
+          deletedAt: null,
+        },
+      });
+
+      if (!order || order.status !== OrderStatus.PENDING_PAYMENT) {
+        throw CannotCancelOrderException;
+      }
+      const updatedOrder = await this.prismaService.order.update({
         where: {
           id: orderId,
           userId,
@@ -215,7 +227,7 @@ export class OrderRepo {
         },
       });
 
-      return order;
+      return updatedOrder;
     } catch (error) {
       if (isNotFoundError(error)) {
         throw OrderNotFoundException;
