@@ -2,16 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, OrderStatus } from 'src/generated/prisma/client';
 import {
   NotFoundCartItemException,
+  OrderNotFoundException,
   OutOfStockSKUException,
   ProductNotFoundException,
   SKUNotBelongToShopException,
 } from 'src/routes/order/order.error';
 import {
+  CancelOrderResType,
   CreateOrderBodyType,
   CreateOrderResType,
+  GetOrderDetailResType,
   GetOrderListQueryType,
   GetOrderListResType,
 } from 'src/routes/order/order.model';
+import { isNotFoundError } from 'src/shared/helpers';
 import { PrismaService } from 'src/shared/services/prisma.service';
 
 @Injectable()
@@ -178,5 +182,45 @@ export class OrderRepo {
     return {
       data: orders,
     };
+  }
+
+  async detail(userId: number, orderId: number): Promise<GetOrderDetailResType> {
+    const order = await this.prismaService.order.findUnique({
+      where: {
+        id: orderId,
+        userId,
+        deletedAt: null,
+      },
+      include: {
+        items: true,
+      },
+    });
+    if (!order) {
+      throw OrderNotFoundException;
+    }
+    return order;
+  }
+
+  async cancel(userId: number, orderId: number): Promise<CancelOrderResType> {
+    try {
+      const order = await this.prismaService.order.update({
+        where: {
+          id: orderId,
+          userId,
+          deletedAt: null,
+        },
+        data: {
+          status: OrderStatus.CANCELLED,
+          updatedById: userId,
+        },
+      });
+
+      return order;
+    } catch (error) {
+      if (isNotFoundError(error)) {
+        throw OrderNotFoundException;
+      }
+      throw error;
+    }
   }
 }
