@@ -34,4 +34,4 @@ export const WebhookPaymentBodySchema = z.object({
   referenceCode: z.string().nullable(), // Mã tham chiếu của tin nhắn sms
   description: z.string(), // Toàn bộ nội dung tin nhắn sms
 });
-export type WebhookPaymentBody = z.infer<typeof WebhookPaymentBodySchema>;
+export type WebhookPaymentBodyType = z.infer<typeof WebhookPaymentBodySchema>;
