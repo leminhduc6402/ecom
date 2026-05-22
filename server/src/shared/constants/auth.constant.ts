@@ -2,7 +2,7 @@ export const REQUEST_USER_KEY = 'user';
 export const REQUEST_ROLE_PERMISSIONS = 'role_permissions';
 
 export const AuthType = {
-  APIKey: 'ApiKey',
+  PaymentAPIKey: 'PaymentAPIKey',
   Bearer: 'Bearer',
   None: 'None',
 } as const;
