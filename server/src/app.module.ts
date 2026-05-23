@@ -24,9 +24,18 @@ import { ProductTranslationModule } from 'src/routes/product/product-translation
 import { CartModule } from 'src/routes/cart/cart.module';
 import { OrderModule } from 'src/routes/order/order.module';
 import { PaymentModule } from 'src/routes/payment/payment.module';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    BullModule.forRoot({
+      connection: {
+        host: 'idea-sure-show-86504.db.redis.io',
+        port: 15800,
+        username: 'default',
+        password: 'ldtNFSKXgfGY9RFlevp2Y9A0SLxKJAXE',
+      },
+    }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
