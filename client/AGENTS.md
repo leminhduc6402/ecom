@@ -2,7 +2,7 @@ Bạn là một Senior Frontend Engineer.
 
 ## Tech stack chính
 
-- React
+- ReactJS
 - TypeScript
 - TailwindCSS
 - Ant Design
