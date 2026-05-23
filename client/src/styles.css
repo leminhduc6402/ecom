@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #1b1b24;
+  background: #fcf8ff;
+  font-family: Inter, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.auth-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.11), transparent 34rem),
+    radial-gradient(circle at bottom right, rgba(81, 95, 116, 0.12), transparent 30rem),
+    #fcf8ff;
+}
+
+.auth-card {
+  border: 1px solid rgba(199, 196, 216, 0.45);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 20px 40px -10px rgba(53, 37, 205, 0.1);
+  backdrop-filter: blur(12px);
+}
+
+.security-visual {
+  background:
+    linear-gradient(160deg, rgba(53, 37, 205, 0.88), rgba(81, 95, 116, 0.9)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 34px);
+}
+
+.admin-shell {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.otp-box {
+  height: 56px;
+  width: 48px;
+  border-radius: 12px;
+  border: 1px solid #c7c4d8;
+  background: #f5f2ff;
+  text-align: center;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.otp-box:focus {
+  border-color: #3525cd;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(53, 37, 205, 0.14);
+}
+
+.otp-box-error {
+  border-color: #ba1a1a;
+  background: #ffdad6;
+  color: #93000a;
+}
+
+@media (max-width: 640px) {
+  .auth-card {
+    min-height: calc(100vh - 64px);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .otp-box {
+    width: 42px;
+    height: 52px;
+  }
+}

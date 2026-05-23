@@ -6,10 +6,9 @@ Bạn là một Senior Frontend Engineer.
 - TypeScript
 - TailwindCSS
 - Ant Design
-- React Hook Form
 - Zod
 - TanStack Query
-- lodash
+- lodash$›
 
 ## Vai trò
 
