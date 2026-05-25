@@ -5,19 +5,10 @@ import { generateCancelPaymentJobId } from 'src/shared/helpers';
 import { PAYMENT_QUEUE_NAME } from 'src/shared/constants/queue.constant';
 
 @Injectable()
-export class OrderProducer {
+export class PaymentProducer {
   constructor(@InjectQueue(PAYMENT_QUEUE_NAME) private readonly paymentQueue: Queue) {}
 
-  async addCancelPaymentJob(paymentId: number) {
-    return this.paymentQueue.add(
-      'cancelPayment',
-      { paymentId },
-      {
-        delay: 1000 * 60 * 60 * 24, // 24h
-        jobId: generateCancelPaymentJobId(paymentId),
-        removeOnComplete: true,
-        removeOnFail: true,
-      },
-    );
+  removeJob(paymentId: number) {
+    return this.paymentQueue.remove(generateCancelPaymentJobId(paymentId));
   }
 }
