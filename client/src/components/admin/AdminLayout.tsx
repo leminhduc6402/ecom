@@ -1,4 +1,4 @@
-import { LogoutOutlined, SafetyCertificateOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, SafetyCertificateOutlined, SettingOutlined, UserOutlined, TeamOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -11,7 +11,9 @@ type AdminLayoutProps = {
 
 const navItems = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: <SafetyCertificateOutlined /> },
-  { label: 'Settings', path: '/admin/settings/2fa', icon: <SettingOutlined /> },
+  { label: 'Người dùng', path: '/admin/users', icon: <TeamOutlined /> },
+  { label: 'Hồ sơ', path: '/admin/profile', icon: <UserOutlined /> },
+  { label: 'Cài đặt 2FA', path: '/admin/settings/2fa', icon: <SettingOutlined /> },
 ];
 
 export default function AdminLayout({ title, children }: AdminLayoutProps) {

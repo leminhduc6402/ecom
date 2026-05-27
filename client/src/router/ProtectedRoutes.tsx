@@ -20,8 +20,8 @@ export function AdminRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
   const user = getStoredUser();
 
-  if (!hasToken() || user?.role.name !== 'Admin') {
-    return <Navigate to="/admin/login" state={{ from: location }} replace />;
+  if (!hasToken() || user?.role?.name?.toUpperCase() !== 'ADMIN') {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return children;

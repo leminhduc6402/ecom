@@ -46,12 +46,27 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: (data: LoginInput) => authApi.login(data),
-    onSuccess: (data) => {
-      persistAuth(data);
-      setUser(data.user);
-      message.success('Đăng nhập thành công');
-      if (data.user.role.name === 'Admin') navigate('/admin/dashboard');
-      else navigate('/profile/security');
+    onSuccess: async (data) => {
+      // API chỉ trả về accessToken và refreshToken
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      
+      try {
+        // Fetch user profile immediately after getting the token
+        const { profileApi } = await import('../api/profile.api');
+        const userProfile = await profileApi.getMe();
+        
+        // Save user profile
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userProfile));
+        setUser(userProfile as any); // Type cast if necessary, since AuthUser in types/auth might slightly differ but has the same role.name
+
+        message.success('Đăng nhập thành công');
+        if (userProfile.role?.name?.toUpperCase() === 'ADMIN') navigate('/admin/dashboard');
+        else navigate('/');
+      } catch (error) {
+        message.error('Lấy thông tin người dùng thất bại, vui lòng thử lại');
+        clearAuth();
+      }
     },
     onError: (err: Error) => {
       message.error(err.message || 'Đăng nhập thất bại');
@@ -74,7 +89,7 @@ export function useAuth() {
     () => ({
       user,
       isAuthenticated: hasToken(),
-      isAdmin: user?.role.name === 'Admin',
+      isAdmin: user?.role?.name?.toUpperCase() === 'ADMIN',
       login,
       logout,
       loginMutation,
