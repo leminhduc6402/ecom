@@ -1,14 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CreateOrderBodyType, GetOrderListQueryType, GetOrderListResType } from 'src/routes/order/order.model';
 import { OrderRepo } from 'src/routes/order/order.repo';
-import { OrderProducer } from './order.producer';
 
 @Injectable()
 export class OrderService {
-  constructor(
-    private readonly orderRepo: OrderRepo,
-    private readonly orderProducer: OrderProducer,
-  ) {}
+  constructor(private readonly orderRepo: OrderRepo) {}
 
   async list(userId: number, query: GetOrderListQueryType): Promise<GetOrderListResType> {
     return this.orderRepo.list(userId, query);
@@ -16,8 +12,7 @@ export class OrderService {
 
   async create(userId: number, body: CreateOrderBodyType) {
     const result = await this.orderRepo.create(userId, body);
-    await this.orderProducer.addCancelPaymentJob(result.paymentId);
-    return { data: result.orders };
+    return result;
   }
 
   cancel(userId: number, orderId: number) {
