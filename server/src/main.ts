@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { UPLOAD_DIR } from 'src/shared/constants/other.constant';
+import { AppModule } from './app.module';
+import { WebSocketAdapter } from './websockets/websocket.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -9,9 +9,8 @@ async function bootstrap() {
     origin: '*', // Allow all origins (for development)
     credentials: true,
   });
-  // app.useStaticAssets(UPLOAD_DIR, {
-  //   prefix: '/media/static',
-  // });
+
+  app.useWebSocketAdapter(new WebSocketAdapter(app));
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
