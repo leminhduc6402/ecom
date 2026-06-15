@@ -1,8 +1,8 @@
 import { INestApplicationContext } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ServerOptions, Server, Socket } from 'socket.io';
-import { SharedWebsocketRepository } from 'src/shared/repositories/shared-websocket.repo';
 import { TokenService } from 'src/shared/services/token.service';
+import { SharedWebsocketRepository } from 'src/shared/repositories/shared-websocket';
 
 const namespaces = ['/', 'payment', 'chat'];
 export class WebsocketAdapter extends IoAdapter {
