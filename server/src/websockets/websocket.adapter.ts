@@ -3,6 +3,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ServerOptions, Server, Socket } from 'socket.io';
 import { TokenService } from 'src/shared/services/token.service';
 import { SharedWebsocketRepository } from 'src/shared/repositories/shared-websocket';
+import { generateRoomUserId } from 'src/shared/helpers';
 
 const namespaces = ['/', 'payment', 'chat'];
 export class WebSocketAdapter extends IoAdapter {
@@ -52,13 +53,15 @@ export class WebSocketAdapter extends IoAdapter {
     }
     try {
       const { userId } = await this.tokenService.verifyAccessToken(accessToken);
-      await this.sharedWebsocketRepository.create({
-        id: socket.id,
-        userId,
-      });
-      socket.on('disconnect', async () => {
-        await this.sharedWebsocketRepository.delete(socket.id).catch(() => {});
-      });
+      await socket.join(generateRoomUserId(userId));
+      // const { userId } = await this.tokenService.verifyAccessToken(accessToken);
+      // await this.sharedWebsocketRepository.create({
+      //   id: socket.id,
+      //   userId,
+      // });
+      // socket.on('disconnect', async () => {
+      //   await this.sharedWebsocketRepository.delete(socket.id).catch(() => {});
+      // });
       next();
     } catch (error) {
       next(error);
