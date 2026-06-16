@@ -10,7 +10,9 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.useWebSocketAdapter(new WebSocketAdapter(app));
+  const websocketAdapter = new WebSocketAdapter(app);
+  await websocketAdapter.connectToRedis();
+  app.useWebSocketAdapter(websocketAdapter);
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
