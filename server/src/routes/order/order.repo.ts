@@ -64,7 +64,7 @@ export class OrderRepo {
   async create(
     userId: number,
     body: CreateOrderBodyType,
-  ): Promise<{ paymentId: number; orders: CreateOrderResType['data'] }> {
+  ): Promise<{ paymentId: number; orders: CreateOrderResType['orders'] }> {
     // 1. Kiểm tra xem tất cả cartItemIds có tồn tại trong cơ sở dữ liệu hay không
     // 2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
     // 3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào bị xóa hay ẩn không

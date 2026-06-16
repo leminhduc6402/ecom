@@ -5,7 +5,7 @@ import { TokenService } from 'src/shared/services/token.service';
 import { SharedWebsocketRepository } from 'src/shared/repositories/shared-websocket';
 
 const namespaces = ['/', 'payment', 'chat'];
-export class WebsocketAdapter extends IoAdapter {
+export class WebSocketAdapter extends IoAdapter {
   private readonly sharedWebsocketRepository: SharedWebsocketRepository;
   private readonly tokenService: TokenService;
   constructor(app: INestApplicationContext) {
