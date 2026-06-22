@@ -13,7 +13,7 @@ export const PaymentTransactionSchema = z.object({
   transactionContent: z.string().nullable(),
   referenceNumber: z.string().nullable(),
   body: z.string().nullable(),
-  createdAt: z.coerce.date(),
+  createdAt: z.date(),
 });
 export type PaymentTransactionType = z.infer<typeof PaymentTransactionSchema>;
 
