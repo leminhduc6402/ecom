@@ -24,9 +24,9 @@ export const OrderSchema = z.object({
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
   deletedById: z.number().nullable(),
-  deletedAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  deletedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 export type OrderType = z.infer<typeof OrderSchema>;
 
@@ -49,7 +49,7 @@ export const ProductSKUSnapshotSchema = z.object({
   orderId: z.number().nullable(),
   quantity: z.number(),
 
-  createdAt: z.date(),
+  createdAt: z.iso.datetime(),
 });
 export type ProductSKUSnapshotType = z.infer<typeof ProductSKUSnapshotSchema>;
 

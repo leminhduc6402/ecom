@@ -27,7 +27,7 @@ export class OrderRepo {
     private readonly prismaService: PrismaService,
     private readonly orderProducer: OrderProducer,
   ) {}
-  async list(userId: number, query: GetOrderListQueryType): Promise<GetOrderListResType> {
+  async list(userId: number, query: GetOrderListQueryType) {
     const { page, limit, status } = query;
     const skip = (page - 1) * limit;
     const take = limit;
@@ -61,10 +61,7 @@ export class OrderRepo {
     };
   }
 
-  async create(
-    userId: number,
-    body: CreateOrderBodyType,
-  ): Promise<{ paymentId: number; orders: CreateOrderResType['orders'] }> {
+  async create(userId: number, body: CreateOrderBodyType) {
     // 1. Kiểm tra xem tất cả cartItemIds có tồn tại trong cơ sở dữ liệu hay không
     // 2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
     // 3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào bị xóa hay ẩn không
@@ -214,7 +211,7 @@ export class OrderRepo {
     };
   }
 
-  async detail(userId: number, orderId: number): Promise<GetOrderDetailResType> {
+  async detail(userId: number, orderId: number) {
     const order = await this.prismaService.order.findUnique({
       where: {
         id: orderId,
@@ -231,7 +228,7 @@ export class OrderRepo {
     return order;
   }
 
-  async cancel(userId: number, orderId: number): Promise<CancelOrderResType> {
+  async cancel(userId: number, orderId: number) {
     try {
       const order = await this.prismaService.order.findUnique({
         where: {

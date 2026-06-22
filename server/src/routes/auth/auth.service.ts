@@ -118,7 +118,7 @@ export class AuthService {
       email: body.email,
       code: otp,
       type: body.type,
-      expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN as StringValue)),
+      expiresAt: addMilliseconds(new Date(), ms(envConfig.OTP_EXPIRES_IN as StringValue)).toISOString(),
     });
 
     const { error } = await this.emailService.sendOTP({ email: body.email, code: otp });

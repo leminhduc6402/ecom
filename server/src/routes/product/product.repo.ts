@@ -41,7 +41,7 @@ export class ProductRepo {
     languageId?: string;
     orderBy: OrderByType;
     sortBy: SortByType;
-  }): Promise<GetProductsResType> {
+  }) {
     const skip = (page - 1) * limit;
     const take = limit;
     let where: Prisma.ProductWhereInput = {
@@ -125,7 +125,7 @@ export class ProductRepo {
     };
   }
 
-  findById(productId: number): Promise<ProductType | null> {
+  findById(productId: number) {
     return this.prismaService.product.findUnique({
       where: {
         id: productId,
@@ -135,15 +135,7 @@ export class ProductRepo {
   }
 
   // Get product detail
-  getDetail({
-    productId,
-    languageId,
-    isPublic,
-  }: {
-    productId: number;
-    languageId: string;
-    isPublic?: boolean;
-  }): Promise<GetProductDetailResType | null> {
+  getDetail({ productId, languageId, isPublic }: { productId: number; languageId: string; isPublic?: boolean }) {
     let where: Prisma.ProductWhereUniqueInput = {
       id: productId,
       deletedAt: null,
@@ -188,13 +180,7 @@ export class ProductRepo {
   }
 
   // Create product
-  create({
-    createdById,
-    data,
-  }: {
-    createdById: number;
-    data: CreateProductBodyType;
-  }): Promise<GetProductDetailResType> {
+  create({ createdById, data }: { createdById: number; data: CreateProductBodyType }) {
     const { skus, categories, ...productData } = data;
     return this.prismaService.product.create({
       data: {
@@ -238,15 +224,7 @@ export class ProductRepo {
   }
 
   // Update product by id
-  async update({
-    id,
-    updatedById,
-    data,
-  }: {
-    id: number;
-    updatedById: number;
-    data: UpdateProductBodyType;
-  }): Promise<ProductType> {
+  async update({ id, updatedById, data }: { id: number; updatedById: number; data: UpdateProductBodyType }) {
     const { skus: dataSkus, categories, ...productData } = data;
     // 1. Lấy danh sách SKU hiện tại tồn tại trong DB
     const existingSKU = await this.prismaService.sKU.findMany({
@@ -340,7 +318,7 @@ export class ProductRepo {
   }
 
   // Delete product by id
-  async delete({ id, deletedById }: { id: number; deletedById: number }, isHard?: boolean): Promise<ProductType> {
+  async delete({ id, deletedById }: { id: number; deletedById: number }, isHard?: boolean) {
     if (isHard) {
       const [product] = await Promise.all([
         this.prismaService.product.delete({

@@ -6,7 +6,7 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 export class LanguageRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create({ createdById, data }: { createdById: number; data: CreateLanguageBodyType }): Promise<LanguageType> {
+  async create({ createdById, data }: { createdById: number; data: CreateLanguageBodyType }) {
     return await this.prismaService.language.create({
       data: {
         ...data,
@@ -15,27 +15,19 @@ export class LanguageRepository {
     });
   }
 
-  async findAll(): Promise<LanguageType[]> {
+  async findAll() {
     return await this.prismaService.language.findMany({
       where: { deletedAt: null },
     });
   }
 
-  async findById(id: string): Promise<LanguageType | null> {
+  async findById(id: string) {
     return await this.prismaService.language.findUnique({
       where: { id, deletedAt: null },
     });
   }
 
-  async update({
-    id,
-    data,
-    updatedById,
-  }: {
-    id: string;
-    data: UpdateLanguageBodyType;
-    updatedById: number;
-  }): Promise<LanguageType> {
+  async update({ id, data, updatedById }: { id: string; data: UpdateLanguageBodyType; updatedById: number }) {
     return await this.prismaService.language.update({
       where: { id, deletedAt: null },
       data: {
@@ -45,7 +37,7 @@ export class LanguageRepository {
     });
   }
 
-  async delete(id: string, isHard: boolean): Promise<LanguageType> {
+  async delete(id: string, isHard: boolean) {
     return isHard
       ? this.prismaService.language.delete({
           where: {

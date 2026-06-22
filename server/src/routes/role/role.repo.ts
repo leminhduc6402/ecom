@@ -7,7 +7,7 @@ import { RoleType } from 'src/shared/models/shared-role.model';
 export class RoleRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findAll(pagination: GetRolesQueryType): Promise<GetRolesResType> {
+  async findAll(pagination: GetRolesQueryType) {
     const skip = (pagination.page - 1) * pagination.limit;
     const take = pagination.limit;
     const [totalItems, data] = await Promise.all([
@@ -29,7 +29,7 @@ export class RoleRepository {
     };
   }
 
-  findById(id: number): Promise<RoleType | null> {
+  findById(id: number) {
     return this.prismaService.role.findUnique({
       where: { id, deletedAt: null },
       include: {
@@ -38,7 +38,7 @@ export class RoleRepository {
     });
   }
 
-  async create({ createdById, data }: { createdById: number; data: CreateRoleBodyType }): Promise<RoleType> {
+  async create({ createdById, data }: { createdById: number; data: CreateRoleBodyType }) {
     return await this.prismaService.role.create({
       data: {
         ...data,
@@ -47,15 +47,7 @@ export class RoleRepository {
     });
   }
 
-  async update({
-    id,
-    data,
-    updatedById,
-  }: {
-    id: number;
-    data: UpdateRoleBodyType;
-    updatedById: number;
-  }): Promise<RoleType> {
+  async update({ id, data, updatedById }: { id: number; data: UpdateRoleBodyType; updatedById: number }) {
     // Kiểm tra permission đã bị xóa (mềm) thì không cho phép cập nhật
     if (data.permissionIds.length > 0) {
       const permissions = await this.prismaService.permission.findMany({
@@ -94,7 +86,7 @@ export class RoleRepository {
       deletedById: number;
     },
     isHard?: boolean,
-  ): Promise<RoleType> {
+  ) {
     return isHard
       ? this.prismaService.role.delete({
           where: {

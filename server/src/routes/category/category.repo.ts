@@ -13,13 +13,7 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 export class CategoryRepo {
   constructor(private prismaService: PrismaService) {}
 
-  async findAll({
-    parentCategoryId,
-    languageId,
-  }: {
-    parentCategoryId?: number | null;
-    languageId: string;
-  }): Promise<GetAllCategoriesResType> {
+  async findAll({ parentCategoryId, languageId }: { parentCategoryId?: number | null; languageId: string }) {
     const categories = await this.prismaService.category.findMany({
       where: {
         deletedAt: null,
@@ -41,7 +35,7 @@ export class CategoryRepo {
     };
   }
 
-  findById({ id, languageId }: { id: number; languageId: string }): Promise<CategoryIncludeTranslationType | null> {
+  findById({ id, languageId }: { id: number; languageId: string }) {
     return this.prismaService.category.findUnique({
       where: {
         id,
@@ -55,13 +49,7 @@ export class CategoryRepo {
     });
   }
 
-  create({
-    createdById,
-    data,
-  }: {
-    createdById: number | null;
-    data: CreateCategoryBodyType;
-  }): Promise<CategoryIncludeTranslationType> {
+  create({ createdById, data }: { createdById: number | null; data: CreateCategoryBodyType }) {
     return this.prismaService.category.create({
       data: {
         ...data,
@@ -75,15 +63,7 @@ export class CategoryRepo {
     });
   }
 
-  async update({
-    id,
-    updatedById,
-    data,
-  }: {
-    id: number;
-    updatedById: number;
-    data: UpdateCategoryBodyType;
-  }): Promise<CategoryIncludeTranslationType> {
+  async update({ id, updatedById, data }: { id: number; updatedById: number; data: UpdateCategoryBodyType }) {
     return this.prismaService.category.update({
       where: {
         id,
@@ -110,7 +90,7 @@ export class CategoryRepo {
       deletedById: number;
     },
     isHard?: boolean,
-  ): Promise<CategoryType> {
+  ) {
     return isHard
       ? this.prismaService.category.delete({
           where: {

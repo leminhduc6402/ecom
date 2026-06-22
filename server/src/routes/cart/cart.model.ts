@@ -10,8 +10,8 @@ export const CartItemSchema = z.object({
   skuId: z.number(),
   quantity: z.number(),
 
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 export type CartItemType = z.infer<typeof CartItemSchema>;
 

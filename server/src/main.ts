@@ -3,14 +3,15 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { WebSocketAdapter } from './websockets/websocket.adapter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { cleanupOpenApiDoc } from 'nestjs-zod';
+import { DateToIsoInterceptor } from './shared/interceptor/date-to-iso.interceptor';
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.enableCors({
     origin: '*', // Allow all origins (for development)
     credentials: true,
   });
-
+  app.useGlobalInterceptors(new DateToIsoInterceptor());
   const config = new DocumentBuilder()
     .setTitle('Ecommerce API')
     .setDescription('The API for the ecommerce application')

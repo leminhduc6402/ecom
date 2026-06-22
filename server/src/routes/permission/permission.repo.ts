@@ -12,7 +12,7 @@ import {
 export class PermissionRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findAll(pagination: GetPermissionsQueryType): Promise<GetPermissionsResType> {
+  async findAll(pagination: GetPermissionsQueryType) {
     const skip = (pagination.page - 1) * pagination.limit;
     const take = pagination.limit;
     const [totalItems, data] = await Promise.all([
@@ -34,19 +34,13 @@ export class PermissionRepository {
     };
   }
 
-  findById(id: number): Promise<PermissionType | null> {
+  findById(id: number) {
     return this.prismaService.permission.findUnique({
       where: { id, deletedAt: null },
     });
   }
 
-  async create({
-    createdById,
-    data,
-  }: {
-    createdById: number;
-    data: CreatePermissionBodyType;
-  }): Promise<PermissionType> {
+  async create({ createdById, data }: { createdById: number; data: CreatePermissionBodyType }) {
     return await this.prismaService.permission.create({
       data: {
         ...data,
@@ -55,15 +49,7 @@ export class PermissionRepository {
     });
   }
 
-  update({
-    id,
-    data,
-    updatedById,
-  }: {
-    id: number;
-    data: UpdatePermissionBodyType;
-    updatedById: number;
-  }): Promise<PermissionType> {
+  update({ id, data, updatedById }: { id: number; data: UpdatePermissionBodyType; updatedById: number }) {
     return this.prismaService.permission.update({
       where: { id, deletedAt: null },
       data: {
@@ -82,7 +68,7 @@ export class PermissionRepository {
       deletedById: number;
     },
     isHard?: boolean,
-  ): Promise<PermissionType> {
+  ) {
     return isHard
       ? this.prismaService.permission.delete({
           where: {

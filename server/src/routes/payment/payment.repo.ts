@@ -86,7 +86,7 @@ export class PaymentRepo {
       }
       const userId = payment.orders[0].userId;
       const { orders } = payment;
-      const totalPrice = this.getTotalPrice(orders);
+      const totalPrice = this.getTotalPrice(orders as any);
       if (totalPrice !== body.transferAmount) {
         throw new BadRequestException(`Price not match, expected ${totalPrice} but got ${body.transferAmount}`);
       }

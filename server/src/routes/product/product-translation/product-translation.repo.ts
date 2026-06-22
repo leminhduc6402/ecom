@@ -11,7 +11,7 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 export class ProductTranslationRepo {
   constructor(private prismaService: PrismaService) {}
 
-  findById(id: number): Promise<GetProductTranslationDetailResType | null> {
+  findById(id: number) {
     return this.prismaService.productTranslation.findUnique({
       where: {
         id,
@@ -20,13 +20,7 @@ export class ProductTranslationRepo {
     });
   }
 
-  create({
-    createdById,
-    data,
-  }: {
-    createdById: number | null;
-    data: CreateProductTranslationBodyType;
-  }): Promise<ProductTranslationType> {
+  create({ createdById, data }: { createdById: number | null; data: CreateProductTranslationBodyType }) {
     return this.prismaService.productTranslation.create({
       data: {
         ...data,
@@ -35,15 +29,7 @@ export class ProductTranslationRepo {
     });
   }
 
-  async update({
-    id,
-    updatedById,
-    data,
-  }: {
-    id: number;
-    updatedById: number;
-    data: UpdateProductTranslationBodyType;
-  }): Promise<ProductTranslationType> {
+  async update({ id, updatedById, data }: { id: number; updatedById: number; data: UpdateProductTranslationBodyType }) {
     return this.prismaService.productTranslation.update({
       where: {
         id,
@@ -65,7 +51,7 @@ export class ProductTranslationRepo {
       deletedById: number;
     },
     isHard?: boolean,
-  ): Promise<ProductTranslationType> {
+  ) {
     return isHard
       ? this.prismaService.productTranslation.delete({
           where: {

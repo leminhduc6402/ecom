@@ -36,8 +36,8 @@ export const VerificationCodeSchema = z.object({
     TypeOfVerificationCode.LOGIN,
     TypeOfVerificationCode.DISABLE_2FA,
   ]),
-  expiresAt: z.date(),
-  createdAt: z.date(),
+  expiresAt: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
 });
 
 export type VerificationCodeType = z.infer<typeof VerificationCodeSchema>;
@@ -106,8 +106,8 @@ export const DeviceSchema = z.object({
   userId: z.number(),
   userAgent: z.string(),
   ip: z.string(),
-  lastActive: z.date(),
-  createdAt: z.date(),
+  lastActive: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
   isActive: z.boolean(),
 });
 export type DeviceType = z.infer<typeof DeviceSchema>;
@@ -116,8 +116,8 @@ export const RefreshTokenSchema = z.object({
   token: z.string(),
   userId: z.number(),
   deviceId: z.number(),
-  expiresAt: z.date(),
-  createdAt: z.date(),
+  expiresAt: z.iso.datetime(),
+  createdAt: z.iso.datetime(),
 });
 export type RefreshTokenType = z.infer<typeof RefreshTokenSchema>;
 
@@ -128,9 +128,9 @@ export const RoleSchema = z.object({
   isActive: z.boolean(),
   createdById: z.number().nullable(),
   updatedById: z.number().nullable(),
-  deletedAt: z.date().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  deletedAt: z.iso.datetime().nullable(),
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
 });
 
 export const LogoutBodySchema = RefreshTokenBodySchema;

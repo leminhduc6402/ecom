@@ -33,7 +33,7 @@ export class CartRepo {
     quantity: number;
     userId: number;
     isCreate: boolean;
-  }): Promise<SKUSchemaType> {
+  }) {
     const [cartItem, sku] = await Promise.all([
       this.prismaService.cartItem.findUnique({
         where: {
@@ -76,17 +76,7 @@ export class CartRepo {
     return sku;
   }
 
-  async list({
-    userId,
-    languageId,
-    page,
-    limit,
-  }: {
-    userId: number;
-    languageId: string;
-    limit: number;
-    page: number;
-  }): Promise<GetCartResType> {
+  async list({ userId, languageId, page, limit }: { userId: number; languageId: string; limit: number; page: number }) {
     const cartItems = await this.prismaService.cartItem.findMany({
       where: {
         userId,
@@ -124,7 +114,7 @@ export class CartRepo {
           cartItems: [],
         });
       }
-      groupMap.get(shopId)!.cartItems.push(cartItem);
+      groupMap.get(shopId)!.cartItems.push(cartItem as any);
     }
     const sortedGroup = Array.from(groupMap.values());
     const skip = (page - 1) * limit;
@@ -243,7 +233,7 @@ export class CartRepo {
     };
   }
 
-  async create(userId: number, body: AddToCartBodyType): Promise<CartItemType> {
+  async create(userId: number, body: AddToCartBodyType) {
     await this.validateSKU({
       skuId: body.skuId,
       quantity: body.quantity,
@@ -269,15 +259,7 @@ export class CartRepo {
     });
   }
 
-  async update({
-    userId,
-    cartItemId,
-    body,
-  }: {
-    userId: number;
-    cartItemId: number;
-    body: UpdateCartItemBodyType;
-  }): Promise<CartItemType> {
+  async update({ userId, cartItemId, body }: { userId: number; cartItemId: number; body: UpdateCartItemBodyType }) {
     await this.validateSKU({
       skuId: body.skuId,
       quantity: body.quantity,

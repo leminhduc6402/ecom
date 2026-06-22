@@ -6,7 +6,7 @@ import { OrderRepo } from 'src/routes/order/order.repo';
 export class OrderService {
   constructor(private readonly orderRepo: OrderRepo) {}
 
-  async list(userId: number, query: GetOrderListQueryType): Promise<GetOrderListResType> {
+  async list(userId: number, query: GetOrderListQueryType) {
     return this.orderRepo.list(userId, query);
   }
 

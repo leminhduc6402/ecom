@@ -14,7 +14,7 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 export class BrandRepo {
   constructor(private prismaService: PrismaService) {}
 
-  async list(pagination: PaginationQueryType, languageId: string): Promise<GetBrandsResType> {
+  async list(pagination: PaginationQueryType, languageId: string) {
     const skip = (pagination.page - 1) * pagination.limit;
     const take = pagination.limit;
     const [totalItems, data] = await Promise.all([
@@ -48,7 +48,7 @@ export class BrandRepo {
     };
   }
 
-  findById(id: number, languageId: string): Promise<BrandIncludeTranslationType | null> {
+  findById(id: number, languageId: string) {
     return this.prismaService.brand.findUnique({
       where: {
         id,
@@ -62,13 +62,7 @@ export class BrandRepo {
     });
   }
 
-  create({
-    createdById,
-    data,
-  }: {
-    createdById: number | null;
-    data: CreateBrandBodyType;
-  }): Promise<BrandIncludeTranslationType> {
+  create({ createdById, data }: { createdById: number | null; data: CreateBrandBodyType }) {
     return this.prismaService.brand.create({
       data: {
         ...data,
@@ -82,15 +76,7 @@ export class BrandRepo {
     });
   }
 
-  async update({
-    id,
-    updatedById,
-    data,
-  }: {
-    id: number;
-    updatedById: number;
-    data: UpdateBrandBodyType;
-  }): Promise<BrandIncludeTranslationType> {
+  async update({ id, updatedById, data }: { id: number; updatedById: number; data: UpdateBrandBodyType }) {
     return this.prismaService.brand.update({
       where: {
         id,
@@ -117,7 +103,7 @@ export class BrandRepo {
       deletedById: number;
     },
     isHard?: boolean,
-  ): Promise<BrandType> {
+  ) {
     return isHard
       ? this.prismaService.brand.delete({
           where: {
