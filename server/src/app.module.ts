@@ -30,9 +30,13 @@ import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-prox
 import CustomZodValidationPipe from './shared/pipes/custom-zod-validation.pipe';
 import { SharedModule } from './shared/shared.module';
 import { WebsocketModule } from './websockets/websocket.module';
+import { ReviewModule } from './routes/review/review.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { RemoveRefreshTokenCronjob } from './cronjobs/remove-refresh-token.cronjob';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     BullModule.forRoot({
       connection: {
         url: envConfig.REDIS_URL,
@@ -73,6 +77,7 @@ import { WebsocketModule } from './websockets/websocket.module';
     OrderModule,
     PaymentModule,
     WebsocketModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [
@@ -94,10 +99,7 @@ import { WebsocketModule } from './websockets/websocket.module';
       useClass: ThrottlerBehindProxyGuard,
     },
     PaymentConsumer,
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: CatchEverythingFilter,
-    // },
+    RemoveRefreshTokenCronjob,
   ],
 })
 export class AppModule {}
