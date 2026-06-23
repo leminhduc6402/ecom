@@ -12,6 +12,7 @@ async function bootstrap() {
     credentials: true,
   });
   app.useGlobalInterceptors(new DateToIsoInterceptor());
+  app.set('trust proxy', 'loopback');
   const config = new DocumentBuilder()
     .setTitle('Ecommerce API')
     .setDescription('The API for the ecommerce application')

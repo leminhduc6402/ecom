@@ -1,32 +1,34 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { SharedModule } from './shared/shared.module';
-import { AuthModule } from './routes/auth/auth.module';
-import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { ZodSerializerInterceptor } from 'nestjs-zod';
-import CustomZodValidationPipe from './shared/pipes/custom-zod-validation.pipe';
-import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
-import { LanguageModule } from './routes/language/language.module';
-import { PermissionModule } from './routes/permission/permission.module';
-import { RoleModule } from './routes/role/role.module';
-import { ProfileModule } from './routes/profile/profile.module';
-import { UserModule } from 'src/routes/user/user.module';
-import { MediaModule } from 'src/routes/media/media.module';
-import { BrandModule } from 'src/routes/brand/brand.module';
-import { BrandTranslationModule } from 'src/routes/brand/brand-translation/brand-translation.module';
-import * as path from 'path';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
-import { CategoryModule } from 'src/routes/category/category.module';
-import { CategoryTranslationModule } from 'src/routes/category/category-translation/category-translation.module';
-import { ProductModule } from 'src/routes/product/product.module';
-import { ProductTranslationModule } from 'src/routes/product/product-translation/product-translation.module';
+import { ZodSerializerInterceptor } from 'nestjs-zod';
+import * as path from 'path';
+import { BrandTranslationModule } from 'src/routes/brand/brand-translation/brand-translation.module';
+import { BrandModule } from 'src/routes/brand/brand.module';
 import { CartModule } from 'src/routes/cart/cart.module';
+import { CategoryTranslationModule } from 'src/routes/category/category-translation/category-translation.module';
+import { CategoryModule } from 'src/routes/category/category.module';
+import { MediaModule } from 'src/routes/media/media.module';
 import { OrderModule } from 'src/routes/order/order.module';
 import { PaymentModule } from 'src/routes/payment/payment.module';
-import { BullModule } from '@nestjs/bullmq';
+import { ProductTranslationModule } from 'src/routes/product/product-translation/product-translation.module';
+import { ProductModule } from 'src/routes/product/product.module';
+import { UserModule } from 'src/routes/user/user.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { PaymentConsumer } from './queues/payment.consumer';
+import { AuthModule } from './routes/auth/auth.module';
+import { LanguageModule } from './routes/language/language.module';
+import { PermissionModule } from './routes/permission/permission.module';
+import { ProfileModule } from './routes/profile/profile.module';
+import { RoleModule } from './routes/role/role.module';
 import envConfig from './shared/config';
+import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
+import { ThrottlerBehindProxyGuard } from './shared/guards/throttler-behind-proxy.guard';
+import CustomZodValidationPipe from './shared/pipes/custom-zod-validation.pipe';
+import { SharedModule } from './shared/shared.module';
 import { WebsocketModule } from './websockets/websocket.module';
 
 @Module({
@@ -35,6 +37,14 @@ import { WebsocketModule } from './websockets/websocket.module';
       connection: {
         url: envConfig.REDIS_URL,
       },
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 10,
+        },
+      ],
     }),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
@@ -78,6 +88,10 @@ import { WebsocketModule } from './websockets/websocket.module';
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerBehindProxyGuard,
     },
     PaymentConsumer,
     // {
