@@ -56,6 +56,9 @@ export class PermissionRepository {
         ...data,
         updatedById,
       },
+      include: {
+        roles: true,
+      },
     });
   }
 
@@ -74,6 +77,9 @@ export class PermissionRepository {
           where: {
             id,
           },
+          include: {
+            roles: true,
+          },
         })
       : this.prismaService.permission.update({
           where: {
@@ -83,6 +89,9 @@ export class PermissionRepository {
           data: {
             deletedAt: new Date(),
             deletedById,
+          },
+          include: {
+            roles: true,
           },
         });
   }

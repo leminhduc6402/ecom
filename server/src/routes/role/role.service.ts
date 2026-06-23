@@ -1,14 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { RoleName } from 'src/shared/constants/role.constant';
 import { NotFoundRecordException } from 'src/shared/error';
 import { isNotFoundError, isUniqueConstraintError } from 'src/shared/helpers';
 import { ProhibitedActionOnBaseRoleException, RoleAlreadyExistsException } from './role.error';
 import { CreateRoleBodyType, GetRolesQueryType, UpdateRoleBodyType } from './role.model';
 import { RoleRepository } from './role.repo';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class RoleService {
-  constructor(private readonly roleRepository: RoleRepository) {}
+  constructor(
+    private readonly roleRepository: RoleRepository,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async findAll(pagination: GetRolesQueryType) {
     const data = await this.roleRepository.findAll(pagination);
@@ -46,6 +51,7 @@ export class RoleService {
         updatedById,
         data,
       });
+      await this.cacheManager.del(`role:${updatedRole.id}`); // Xóa cache của role đã cập nhật
       return updatedRole;
     } catch (error) {
       if (isNotFoundError(error)) {
