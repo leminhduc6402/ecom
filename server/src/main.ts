@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { WebSocketAdapter } from './websockets/websocket.adapter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { DateToIsoInterceptor } from './shared/interceptor/date-to-iso.interceptor';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -12,7 +13,11 @@ async function bootstrap() {
     credentials: true,
   });
   app.useGlobalInterceptors(new DateToIsoInterceptor());
+
+  app.use(helmet());
+
   app.set('trust proxy', 'loopback');
+
   const config = new DocumentBuilder()
     .setTitle('Ecommerce API')
     .setDescription('The API for the ecommerce application')
