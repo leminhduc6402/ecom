@@ -3,11 +3,10 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
 import { WebSocketAdapter } from './websockets/websocket.adapter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { DateToIsoInterceptor } from './shared/interceptor/date-to-iso.interceptor';
+// import { DateToIsoInterceptor } from './shared/interceptor/date-to-iso.interceptor';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
-// import { LoggingInterceptor } from './shared/interceptor/logging.interceptor';
-
+import { cleanupOpenApiDoc } from 'nestjs-zod';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
@@ -18,7 +17,7 @@ async function bootstrap() {
     origin: '*', // Allow all origins (for development)
     credentials: true,
   });
-  app.useGlobalInterceptors(new DateToIsoInterceptor());
+  // app.useGlobalInterceptors(new DateToIsoInterceptor());
   // app.useGlobalInterceptors(new LoggingInterceptor());
   app.use(helmet());
 
@@ -37,8 +36,8 @@ async function bootstrap() {
       'payment-api-key',
     )
     .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory, {
+  const documentFactory = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, cleanupOpenApiDoc(documentFactory), {
     swaggerOptions: {
       persistAuthorization: true,
     },
