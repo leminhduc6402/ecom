@@ -68,70 +68,85 @@ export class OrderRepo {
     // 4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopid gửi lên không
     // 5. Tạo order
     // 6. Xóa cartItem
-    const allBodyCartItemIds = body.map((item) => item.cartItemIds).flat();
-    const cartItems = await this.prismaService.cartItem.findMany({
-      where: {
-        id: {
-          in: allBodyCartItemIds,
+    const [paymentId, orders] = await this.prismaService.$transaction(async (tx) => {
+      const allBodyCartItemIds = body.map((item) => item.cartItemIds).flat();
+      const cartItemsForSKUId = await tx.cartItem.findMany({
+        where: {
+          id: {
+            in: allBodyCartItemIds,
+          },
+          userId,
         },
-        userId,
-      },
-      include: {
-        sku: {
-          include: {
-            product: {
-              include: {
-                productTranslations: true,
+        select: {
+          skuId: true,
+        },
+      });
+      const skuIds = cartItemsForSKUId.map((cartItem) => cartItem.skuId);
+      await tx.$queryRaw`SELECT * FROM "SKU" WHERE id IN (${Prisma.join(skuIds)}) FOR UPDATE`;
+      const cartItems = await tx.cartItem.findMany({
+        where: {
+          id: {
+            in: allBodyCartItemIds,
+          },
+          userId,
+        },
+        include: {
+          sku: {
+            include: {
+              product: {
+                include: {
+                  productTranslations: true,
+                },
               },
             },
           },
         },
-      },
-    });
-    // 1. Kiểm tra xem tất cả cartItemIds có tồn tại trong cơ sở dữ liệu hay không
-    if (cartItems.length !== allBodyCartItemIds.length) {
-      throw NotFoundCartItemException;
-    }
-
-    // 2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
-    const isOutOfStock = cartItems.some((item) => {
-      return item.sku.stock < item.quantity;
-    });
-    if (isOutOfStock) {
-      throw OutOfStockSKUException;
-    }
-
-    // 3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào bị xóa hay ẩn không
-    const isExistNotReadyProduct = cartItems.some(
-      (item) =>
-        item.sku.product.deletedAt !== null ||
-        item.sku.product.publishedAt === null ||
-        item.sku.product.publishedAt > new Date(),
-    );
-    if (isExistNotReadyProduct) {
-      throw ProductNotFoundException;
-    }
-
-    // 4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopid gửi lên không
-    const cartItemMap = new Map<number, (typeof cartItems)[0]>();
-    cartItems.forEach((item) => {
-      cartItemMap.set(item.id, item);
-    });
-    const isValidShop = body.every((item) => {
-      const bodyCartItemIds = item.cartItemIds;
-      return bodyCartItemIds.every((cartItemId) => {
-        // Neu đã đến bước này thì cartItem luôn luôn có giá trị
-        // Vì chúng ta đã so sánh với allBodyCartItems.length ở trên rồi
-        const cartItem = cartItemMap.get(cartItemId)!;
-        return item.shopId === cartItem.sku.createdById;
       });
-    });
-    if (!isValidShop) {
-      throw SKUNotBelongToShopException;
-    }
 
-    // 5. Tạo order và xóa cartItem trong transaction để đảm bảo tính toàn vẹn dữ liệu
-    const [paymentId, orders] = await this.prismaService.$transaction(async (tx) => {
+      // 1. Kiểm tra xem tất cả cartItemIds có tồn tại trong cơ sở dữ liệu hay không
+      if (cartItems.length !== allBodyCartItemIds.length) {
+        throw NotFoundCartItemException;
+      }
+
+      // 2. Kiểm tra số lượng mua có lớn hơn số lượng tồn kho hay không
+      const isOutOfStock = cartItems.some((item) => {
+        return item.sku.stock < item.quantity;
+      });
+      if (isOutOfStock) {
+        throw OutOfStockSKUException;
+      }
+
+      // 3. Kiểm tra xem tất cả sản phẩm mua có sản phẩm nào bị xóa hay ẩn không
+      const isExistNotReadyProduct = cartItems.some(
+        (item) =>
+          item.sku.product.deletedAt !== null ||
+          item.sku.product.publishedAt === null ||
+          item.sku.product.publishedAt > new Date(),
+      );
+      if (isExistNotReadyProduct) {
+        throw ProductNotFoundException;
+      }
+
+      // 4. Kiểm tra xem các skuId trong cartItem gửi lên có thuộc về shopid gửi lên không
+      const cartItemMap = new Map<number, (typeof cartItems)[0]>();
+      cartItems.forEach((item) => {
+        cartItemMap.set(item.id, item);
+      });
+      const isValidShop = body.every((item) => {
+        const bodyCartItemIds = item.cartItemIds;
+        return bodyCartItemIds.every((cartItemId) => {
+          // Neu đã đến bước này thì cartItem luôn luôn có giá trị
+          // Vì chúng ta đã so sánh với allBodyCartItems.length ở trên rồi
+          const cartItem = cartItemMap.get(cartItemId)!;
+          return item.shopId === cartItem.sku.createdById;
+        });
+      });
+      if (!isValidShop) {
+        throw SKUNotBelongToShopException;
+      }
+
+      // 5. Tạo order và xóa cartItem trong transaction để đảm bảo tính toàn vẹn dữ liệu
+
       const payment = await tx.payment.create({
         data: {
           status: PaymentStatus.PENDING,
@@ -142,11 +157,11 @@ export class OrderRepo {
           tx.order.create({
             data: {
               userId,
-              paymentId: payment.id, // Tạm
               status: OrderStatus.PENDING_PAYMENT,
               receiver: item.receiver,
               createdById: userId,
               shopId: item.shopId,
+              paymentId: payment.id,
               items: {
                 create: item.cartItemIds.map((cartItemId) => {
                   const cartItem = cartItemMap.get(cartItemId)!;
@@ -195,13 +210,14 @@ export class OrderRepo {
               id: item.sku.id,
             },
             data: {
-              stock: { decrement: item.quantity },
+              stock: {
+                decrement: item.quantity,
+              },
             },
           }),
         ),
       );
       const addCancelPaymentJob$ = this.orderProducer.addCancelPaymentJob(payment.id);
-
       const [orders] = await Promise.all([orders$, cartItem$, sku$, addCancelPaymentJob$]);
       return [payment.id, orders];
     });
